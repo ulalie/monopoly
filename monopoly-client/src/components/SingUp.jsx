@@ -55,4 +55,8 @@ export default function SingUp() {
 //   "password": "admin123",
 //   "roles": ["ADMIN"]
 // }
-//user useruser
+//{
+//   "username": "user",
+//   "password": "useruser",
+//   "roles": ["USER"]
+// }

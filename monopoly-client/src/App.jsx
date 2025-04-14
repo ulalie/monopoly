@@ -1,6 +1,7 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
+import Game from "./components/Game";
 import Home from "./components/Home";
 import Login from "./components/Login";
 import SingUp from "./components/SingUp";
@@ -41,11 +42,19 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/game"
         element={
           <ProtectedRoute>
             <GameBoard />
+          </ProtectedRoute>
+        }
+      /> */}
+      <Route
+        path="/game/:id"
+        element={
+          <ProtectedRoute>
+            <Game />
           </ProtectedRoute>
         }
       />

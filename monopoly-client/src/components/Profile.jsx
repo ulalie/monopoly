@@ -1,66 +1,117 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom"; // Импортируем Link
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Profile() {
-  //   const [userData, setUserData] = useState([]);
-  //   const [loading, setLoading] = useState(true);
-  //   const [error, setError] = useState(null);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  //   useEffect(() => {
-  //     const fetchUsers = async () => {
-  //       try {
-  //         const token = localStorage.getItem("token");
-  //         if (!token) {
-  //           throw new Error("Пользователь не авторизован");
-  //         }
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        console.log("Начинаем загрузку профиля");
+        const token = localStorage.getItem("token");
+        if (!token) {
+          console.log("Токен отсутствует, перенаправление на страницу входа");
+          navigate("/auth/login");
+          return;
+        }
 
-  //         const res = await fetch("http://localhost:5000/user", {
-  //           method: "GET",
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //             "Content-Type": "application/json",
-  //           },
-  //         });
-  //         if (!response.ok) {
-  //             throw new Error(`HTTP error! status: ${response.status}`);
-  //           }
+        console.log("Отправляем запрос к API /auth/profile");
+        try {
+          const response = await fetch("http://localhost:5000/auth/profile", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
 
-  //           const data = await response.json();
-  //           setUserData(data);
-  //       } catch (err) {
-  //         setError(err.message);
-  //       } finally {
-  //         setLoading(false);
-  //       }
-  //     };
-  //   });
+          console.log("Статус ответа API:", response.status);
 
-  const [userData] = useState({
-    username: "Игрок123",
-    avatar: "https://via.placeholder.com/150",
-    stats: {
-      gamesPlayed: 15,
-      wins: 8,
-    },
-  });
+          if (response.ok) {
+            const data = await response.json();
+            console.log("Данные профиля получены:", data);
+            setUserData(data);
+            setLoading(false);
+          } else {
+            console.log(
+              "API вернул ошибку, пробуем использовать данные из токена"
+            );
+
+            try {
+              const tokenParts = token.split(".");
+              if (tokenParts.length !== 3) {
+                throw new Error("Некорректный формат токена");
+              }
+
+              const payload = JSON.parse(atob(tokenParts[1]));
+              console.log("Данные из токена:", payload);
+
+              const username = payload.username || "Пользователь";
+              setUserData({
+                _id: payload.id,
+                username: username,
+                avatar: `https://ui-avatars.com/api/?name=${username}&background=random`,
+                stats: {
+                  gamesPlayed: 0,
+                  wins: 0,
+                },
+              });
+
+              setLoading(false);
+            } catch (err) {
+              console.error("Ошибка декодирования токена:", err);
+              setError("Ошибка аутентификации");
+              setLoading(false);
+            }
+          }
+        } catch (err) {
+          console.error("Ошибка запроса к API:", err);
+          setError("Ошибка соединения с сервером");
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Общая ошибка загрузки профиля:", err);
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [navigate]);
+
+  if (loading) return <div>Загрузка профиля...</div>;
+  if (error) return <div>Ошибка: {error}</div>;
+  if (!userData) return <div>Профиль не найден</div>;
 
   return (
-    <div>
+    <div className="profile-container">
       <h2>Профиль пользователя</h2>
-      <div>
-        <Link to="/lobby">Перейти в лобби</Link>
+
+      <div className="profile-header">
+        <img
+          src={
+            userData.avatar
+            //    || `https://avatars.dicebear.com/api/initials/${userData.username}.svg`
+          }
+          alt="Аватар пользователя"
+          className="profile-avatar"
+        />
+        <h3>{userData.username}</h3>
       </div>
-      <div>
-        <img src={userData.avatar} alt="Аватар пользователя" />{" "}
-        {/* Добавил alt для изображения */}
+
+      <div className="profile-stats">
+        <p>Сыграно игр: {userData.stats?.gamesPlayed || 0}</p>
+        <p>Побед: {userData.stats?.wins || 0}</p>
       </div>
-      <div>
-        <p>Никнейм: {userData.username}</p>
-        <p>Сыграно игр: {userData.stats.gamesPlayed}</p>
-        <p>Побед: {userData.stats.wins}</p>
-      </div>
-      <div>
-        <Link to="/">На главную</Link>
+
+      <div className="profile-actions">
+        <Link to="/lobby" className="button primary">
+          Перейти в лобби
+        </Link>
+        <Link to="/" className="button secondary">
+          На главную
+        </Link>
       </div>
     </div>
   );

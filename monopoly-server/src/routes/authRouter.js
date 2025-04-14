@@ -1,9 +1,10 @@
-const Router = require("express");
+import Router from "express";
 const router = new Router();
-const controller = require("../controllers/authController");
-const { check } = require("express-validator");
-const authMiddleware = require("../middleware/authMiddleware");
-const roleMiddleware = require("../middleware/roleMiddleware");
+import authController from "../controllers/authController.js";
+const { getUsers, login, registration, getCurrUser } = authController;
+import { check } from "express-validator";
+//import authMiddleware from "../middleware/authMiddleware.js";
+import roleMiddleware from "../middleware/roleMiddleware.js";
 
 router.post(
   "/registration",
@@ -14,9 +15,10 @@ router.post(
       max: 10,
     }),
   ],
-  controller.registration
+  registration
 );
-router.post("/login", controller.login);
-router.get("/users", roleMiddleware(["ADMIN"]), controller.getUsers);
+router.post("/login", login);
+router.get("/users", roleMiddleware(["ADMIN"]), getUsers);
+router.get("/profile", roleMiddleware([]), getCurrUser);
 
-module.exports = router;
+export default router;

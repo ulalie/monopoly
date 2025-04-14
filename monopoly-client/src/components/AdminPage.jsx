@@ -39,25 +39,3 @@ export default function AdminPage() {
     </div>
   );
 }
-/*import React from "react";
-import { Navigate } from "react-router-dom";
-
-export default function ProtectedRoute({ children }) {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    return <Navigate to="/auth/login" />;
-  }
-
-  try {
-    const user = JSON.parse(atob(token.split(".")[1])); // Расшифровываем токен
-    if (!user.roles.includes("ADMIN")) {
-      return <Navigate to="/" />; // Перенаправляем, если пользователь не администратор
-    }
-  } catch (error) {
-    console.error("Ошибка валидации токена:", error);
-    return <Navigate to="/auth/login" />;
-  }
-
-  return children;
-}*/

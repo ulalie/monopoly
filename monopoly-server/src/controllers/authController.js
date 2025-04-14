@@ -1,15 +1,16 @@
-const User = require("../models/User");
-const Role = require("../models/Role");
-const bcrypt = require("bcrypt");
-const { validationResult } = require("express-validator");
-const jwt = require("jsonwebtoken");
-const { secret } = require("../config/config");
+import User from "../models/User.js";
+import Role from "../models/Role.js";
+import Game from "../models/Game.js";
+import { hashSync, compareSync } from "bcrypt";
+import { validationResult } from "express-validator";
+import jwt from "jsonwebtoken";
+const { sign } = jwt;
+import { secret } from "../config/config.js";
 
 const generateAccessToken = (id, roles) => {
   const payload = { id, roles };
-  return jwt.sign(payload, secret, { expiresIn: "24h" });
+  return sign(payload, secret, { expiresIn: "24h" });
 };
-
 class AuthController {
   async registration(req, res) {
     try {
@@ -20,7 +21,7 @@ class AuthController {
           .json({ message: "Ошибки при регистрации", errors });
       }
 
-      const { username, password, roles } = req.body; // Добавляем возможность передавать роли
+      const { username, password, roles } = req.body;
       const candidate = await User.findOne({ username });
       if (candidate) {
         return res
@@ -28,15 +29,13 @@ class AuthController {
           .json({ message: "Пользователь с таким именем уже существует" });
       }
 
-      const hashPassword = bcrypt.hashSync(password, 7);
+      const hashPassword = hashSync(password, 7);
 
-      // Найти роли в базе данных
       let userRoles = [];
       if (roles && roles.length > 0) {
         userRoles = await Role.find({ value: { $in: roles } });
       }
 
-      // Если роли не указаны, используем роль по умолчанию - USER
       if (userRoles.length === 0) {
         const defaultRole = await Role.findOne({ value: "USER" });
         userRoles = [defaultRole];
@@ -45,7 +44,7 @@ class AuthController {
       const user = new User({
         username,
         password: hashPassword,
-        roles: userRoles.map((role) => role.value), // Сохраняем только значения ролей
+        roles: userRoles.map((role) => role.value),
       });
 
       await user.save();
@@ -66,7 +65,7 @@ class AuthController {
           .json({ message: "Пользователь с таким именем не найден" });
       }
 
-      const validPassword = bcrypt.compareSync(password, user.password);
+      const validPassword = compareSync(password, user.password);
       if (!validPassword) {
         return res.status(400).json({ message: "Неверный пароль" });
       }
@@ -85,9 +84,50 @@ class AuthController {
       res.json(users);
     } catch (error) {
       console.log(error);
-      res.status(400).json({ message: "Get users error" });
+      res.status(400).json({ message: "Ошибка получения пользователей" });
+    }
+  }
+
+  async getCurrUser(req, res) {
+    try {
+      const userId = req.user.id;
+      const user = await User.findById(userId).select("-password");
+
+      if (!user) {
+        return res.status(404).json({ message: "Пользователь не найден" });
+      }
+      const stats = {
+        gamesPlayed: 0,
+        wins: 0,
+      };
+
+      try {
+        const games = await Game.find({ "players.user": userId });
+        stats.gamesPlayed = games.length;
+
+        const wins = games.filter(
+          (game) =>
+            game.status === "completed" &&
+            game.players.find(
+              (p) => p.user.toString() === userId && !p.bankrupt
+            )
+        );
+        stats.wins = wins.length;
+      } catch (error) {
+        console.log("Ошибка получения статистики игр:", error);
+      }
+
+      res.json({
+        _id: user._id,
+        username: user.username,
+        roles: user.roles,
+        stats,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ message: "Ошибка сервера" });
     }
   }
 }
 
-module.exports = new AuthController();
+export default new AuthController();
