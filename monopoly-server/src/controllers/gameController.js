@@ -1,47 +1,45 @@
 import Game from "../models/Game.js";
-//import User from "../models/User.js";
+import User from "../models/User.js";
+import Role from "../models/Role.js";
+import bcrypt from "bcryptjs"; 
 
 class GameController {
   async createGame(req, res) {
-    try {
-      const { name, maxPlayers, gameType } = req.body;
-      const userId = req.user.id;
+  try {
+    const { name, maxPlayers, gameType } = req.body;
+    const userId = req.user.id;
 
-      const newGame = new Game({
-        name,
-        creator: userId,
-        maxPlayers: maxPlayers || 4,
-        gameType: gameType || "classic",
-        players: [
-          {
-            user: userId,
-            position: 0,
-            money: 1500,
-            properties: [],
-            color: "#" + Math.floor(Math.random() * 16777215).toString(16),
-          },
-        ],
+    const newGame = new Game({
+      name,
+      creator: userId,
+      maxPlayers: maxPlayers || 4,
+      gameType: gameType || "classic",
+      players: [
+        {
+          user: userId,
+          position: 0,
+          money: 1500,
+          properties: [],
+          color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+        },
+      ],
+      properties: [...initializeMonopolyProperties()],
+      chat: [],
+      lastDiceRoll: null,
+      paymentPending: null,
+      trades: [],
+    });
 
-        properties: [...initializeMonopolyProperties()],
-        chat: [],
-        lastDiceRoll: null,
-        paymentPending: null,
-        trades: [],
-      });
-
-      if (gameType === "with-bots") {
-      // Получаем или создаем бота
-      let botUser = await User.findOne({ username: "Бот-Монополист" });
+    if (gameType === "with-bots") {
+      let botUser = await User.findOne({ username: "Бот" });
       
       if (!botUser) {
-        // Создаем пользователя-бота если его нет
         const botPassword = Math.random().toString(36).substring(2, 15);
         const hashPassword = await bcrypt.hash(botPassword, 7);
-        
         const botRole = await Role.findOne({ value: "USER" });
         
         botUser = new User({
-          username: "Бот-Монополист",
+          username: "Бот",
           password: hashPassword,
           roles: [botRole.value],
           isBot: true
@@ -50,38 +48,106 @@ class GameController {
         await botUser.save();
       }
 
-        // Добавляем бота как игрока
       newGame.players.push({
         user: botUser._id,
         position: 0,
         money: 1500,
         properties: [],
-        color: "#FF5733", // Особый цвет для бота
-        isBot: true
+        color: "#FF5733", 
+        isBot: true,
+        botName: "Бот" 
       });
       
-      // Добавляем сообщение в чат
       newGame.chat.push({
-        message: "Бот-Монополист присоединился к игре",
+        message: "Бот присоединился к игре",
         timestamp: new Date()
       });
+
+      const totalPlayers = newGame.players.length;
+      if (totalPlayers >= 2) {
+        newGame.status = "active";
+        newGame.currentPlayerIndex = 0; 
+        
+        newGame.chat.push({
+          message: `Игра автоматически началась! Первый ход: ${newGame.players[0].user.username || "Игрок"}`,
+          timestamp: new Date()
+        });
+      }
     }
 
+    console.log("Новая игра создается:", {
+      название: name,
+      игроков: newGame.players.length,
+      ботов: newGame.players.filter(p => p.isBot).length,
+      статус: newGame.status
+    });
 
-      await newGame.save().catch((err) => {
-        console.error("Ошибка валидации:", err.errors);
-        throw err;
-      });
-      console.log("Игра успешно создана с ID:", newGame._id);
+    await newGame.save();
+    console.log("Игра успешно создана с ID:", newGame._id);
 
-      res.status(201).json(newGame);
-    } catch (error) {
-      console.log("Ошибка создания игры:", error);
-      res
-        .status(500)
-        .json({ message: "Ошибка создания игры", error: error.message });
+    res.status(201).json(newGame);
+    
+    if (newGame.status === "active" && newGame.players[0].isBot) {
+      setTimeout(() => {
+        this.botTurn(newGame);
+      }, 1000);
     }
+  } catch (error) {
+    console.log("Ошибка создания игры:", error);
+    res.status(500).json({ message: "Ошибка создания игры", error: error.message });
   }
+}
+
+  async startGame(req, res) {
+  try {
+    const gameId = req.params.id;
+    const userId = req.user.id;
+
+    const game = await Game.findById(gameId);
+
+    if (!game) {
+      return res.status(404).json({ message: "Игра не найдена" });
+    }
+
+    const isCreator = String(game.creator) === String(userId);
+    const isParticipant = game.players.some(p => String(p.user) === String(userId));
+
+    if (!isCreator && !isParticipant) {
+      return res.status(403).json({ message: "Вы не участвуете в этой игре" });
+    }
+
+    if (game.status !== "waiting") {
+      return res.status(400).json({ message: "Игра уже запущена" });
+    }
+
+    const totalPlayers = game.players.length;
+    if (totalPlayers < 2) {
+      return res.status(400).json({ message: "Для начала игры нужно минимум 2 участника" });
+    }
+
+    game.status = "active";
+    game.currentPlayerIndex = 0;
+    
+    game.chat.push({
+      message: `Игра началась! Первый ход: ${typeof game.players[0].user === 'object' 
+        ? game.players[0].user.username 
+        : (game.players[0].botName || 'Игрок')}`,
+      timestamp: new Date()
+    });
+
+    await game.save();
+    res.json(game);
+    
+    if (game.players[0].isBot) {
+      setTimeout(() => {
+        this.botTurn(game);
+      }, 1000);
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Ошибка запуска игры" });
+  }
+}
 
   async getAllGames(req, res) {
     try {
@@ -112,47 +178,68 @@ class GameController {
     }
   }
 
-  async joinGame(req, res) {
-    try {
-      const gameId = req.params.id;
-      const userId = req.user.id;
+async joinGame(req, res) {
+  try {
+    const gameId = req.params.id;
+    const userId = req.user.id;
 
-      const game = await Game.findById(gameId);
+    const game = await Game.findById(gameId);
 
-      if (!game) {
-        return res.status(404).json({ message: "Игра не найдена" });
-      }
-
-      if (game.status !== "waiting") {
-        return res.status(400).json({ message: "Игра уже началась" });
-      }
-
-      if (game.players.length >= game.maxPlayers) {
-        return res.status(400).json({ message: "Игра заполнена" });
-      }
-
-      const playerExists = game.players.some(
-        (player) => player.user.toString() === userId
-      );
-      if (playerExists) {
-        return res.status(400).json({ message: "Вы уже в этой игре" });
-      }
-
-      game.players.push({
-        user: userId,
-        position: 0,
-        money: 1500,
-        properties: [],
-        color: "#" + Math.floor(Math.random() * 16777215).toString(16), // Случайный цвет
-      });
-
-      await game.save();
-      res.json(game);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Ошибка присоединения к игре" });
+    if (!game) {
+      return res.status(404).json({ message: "Игра не найдена" });
     }
+
+    if (game.status !== "waiting") {
+      return res.status(400).json({ message: "Игра уже началась" });
+    }
+
+    if (game.players.length >= game.maxPlayers) {
+      return res.status(400).json({ message: "Игра заполнена" });
+    }
+
+    const playerExists = game.players.some(
+      (player) => player.user.toString() === userId
+    );
+    if (playerExists) {
+      return res.status(400).json({ message: "Вы уже в этой игре" });
+    }
+
+    game.players.push({
+      user: userId,
+      position: 0,
+      money: 1500,
+      properties: [],
+      color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+    });
+
+    if (game.players.length >= game.maxPlayers) {
+      game.status = "active";
+      game.currentPlayerIndex = 0;
+      
+      game.chat.push({
+        message: `Комната заполнена. Игра автоматически началась! Первый ход: ${
+          typeof game.players[0].user === 'object' 
+            ? game.players[0].user.username 
+            : (game.players[0].botName || 'Игрок')
+        }`,
+        timestamp: new Date()
+      });
+    }
+
+    await game.save();
+    
+    if (game.status === "active" && game.players[0].isBot) {
+      setTimeout(() => {
+        this.botTurn(game);
+      }, 1000);
+    }
+    
+    res.json(game);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Ошибка присоединения к игре" });
   }
+}
 
   async leaveGame(req, res) {
     try {
@@ -180,7 +267,6 @@ class GameController {
           .json({ message: "Вы не участвуете в этой игре" });
       }
 
-      // Удалить игрока из игры
       game.players.splice(playerIndex, 1);
 
       if (game.players.length === 0) {
@@ -188,7 +274,6 @@ class GameController {
         return res.json({ message: "Игра удалена, так как все игроки вышли" });
       }
 
-      // Если создатель игры вышел, передать право создателя следующему игроку
       if (game.creator.toString() === userId) {
         game.creator = game.players[0].user;
       }
@@ -201,99 +286,68 @@ class GameController {
     }
   }
 
-  async startGame(req, res) {
-    try {
-      const gameId = req.params.id;
-      const userId = req.user.id;
-
-      const game = await Game.findById(gameId);
-
-      if (!game) {
-        return res.status(404).json({ message: "Игра не найдена" });
-      }
-
-      // Только создатель может начать игру
-      if (game.creator.toString() !== userId) {
-        return res
-          .status(403)
-          .json({ message: "Только создатель игры может её начать" });
-      }
-
-      // Игра уже запущена
-      if (game.status !== "waiting") {
-        return res.status(400).json({ message: "Игра уже запущена" });
-      }
-
-      // Проверка минимального количества игроков
-      if (game.players.length < 2) {
-        return res
-          .status(400)
-          .json({ message: "Для начала игры нужно минимум 2 игрока" });
-      }
-
-      // Начать игру
-      game.status = "active";
-      game.currentPlayerIndex = 0; // Первый игрок ходит первым
-
-      await game.save();
-      res.json(game);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Ошибка запуска игры" });
-    }
-  }
-
   async rollDice(req, res) {
-    try {
-      const gameId = req.params.id;
-      const userId = req.user.id;
+  try {
+    const gameId = req.params.id;
+    const userId = req.user.id;
 
-      const game = await Game.findById(gameId);
+    console.log(`[СЕРВЕР] Запрос на бросок кубиков от userId=${userId}, gameId=${gameId}`);
 
-      if (!game) {
-        return res.status(404).json({ message: "Игра не найдена" });
-      }
+    const game = await Game.findById(gameId);
 
-      if (game.status !== "active") {
-        return res.status(400).json({ message: "Игра еще не началась" });
-      }
+    if (!game) {
+      console.log("[СЕРВЕР] Игра не найдена");
+      return res.status(404).json({ message: "Игра не найдена" });
+    }
 
-      // Получить текущего игрока
-      const currentPlayer = game.players[game.currentPlayerIndex];
+    if (game.status !== "active") {
+      console.log("[СЕРВЕР] Игра не активна");
+      return res.status(400).json({ message: "Игра еще не началась" });
+    }
 
-      // Проверить, ход ли пользователя
-      if (currentPlayer.user.toString() !== userId) {
-        return res.status(403).json({ message: "Сейчас не ваш ход" });
-      }
+    const currentPlayer = game.players[game.currentPlayerIndex];
 
-      // Проверка, был ли уже бросок кубиков в этот ход
-      if (game.lastDiceRoll) {
-        return res
-          .status(400)
-          .json({ message: "Вы уже бросали кубики в этот ход" });
-      }
+    console.log("[СЕРВЕР] Данные текущего игрока:", {
+      currentPlayerUserId: currentPlayer.user.toString(),
+      requestUserId: userId,
+      gameLastDiceRoll: game.lastDiceRoll
+    });
 
-      // Бросок кубиков
-      const dice1 = Math.floor(Math.random() * 6) + 1;
-      const dice2 = Math.floor(Math.random() * 6) + 1;
-      const diceSum = dice1 + dice2;
+    if (String(currentPlayer.user.toString()) !== String(userId)) {
+      console.log("[СЕРВЕР] Не ваш ход");
+      return res.status(403).json({ message: "Сейчас не ваш ход" });
+    }
 
-      // Сохранить результаты броска
-      game.lastDiceRoll = {
-        dice: [dice1, dice2],
-        sum: diceSum,
-        doubles: dice1 === dice2,
-      };
+    // Заменить эту проверку:
+    // if (game.lastDiceRoll) {
+    
+    // НА ЭТУ - с более строгой проверкой:
+    if (game.lastDiceRoll && 
+        game.lastDiceRoll.dice && 
+        game.lastDiceRoll.dice.length > 0) {
+      console.log("[СЕРВЕР] Кубики уже брошены");
+      return res.status(400).json({ message: "Вы уже бросали кубики в этот ход" });
+    }
 
-      // Предыдущая позиция
+    // Бросок кубиков...
+    const dice1 = Math.floor(Math.random() * 6) + 1;
+    const dice2 = Math.floor(Math.random() * 6) + 1;
+    const diceSum = dice1 + dice2;
+
+    console.log(`[СЕРВЕР] Новый бросок кубиков: ${dice1}, ${dice2}`);
+
+    // Устанавливаем lastDiceRoll
+    game.lastDiceRoll = {
+      dice: [dice1, dice2],
+      sum: diceSum,
+      doubles: dice1 === dice2,
+    };
+
       const oldPosition = currentPlayer.position;
 
-      // Перемещение игрока
       currentPlayer.position = (currentPlayer.position + diceSum) % 40;
 
-      // Проверить, прошёл ли игрок через СТАРТ
       if (currentPlayer.position < oldPosition) {
-        // Игрок прошёл через СТАРТ, выдать 200$
         currentPlayer.money += 200;
         game.chat.push({
           message: `${currentPlayer.user.username} прошёл через СТАРТ и получил 200$`,
@@ -301,7 +355,6 @@ class GameController {
         });
       }
 
-      // Обработка приземления на различные типы клеток
       const landedProperty = game.properties.find(
         (p) => p.id === currentPlayer.position
       );
@@ -309,16 +362,13 @@ class GameController {
       if (landedProperty) {
         switch (landedProperty.type) {
           case "special":
-            // Обработка специальных клеток (СТАРТ, тюрьма, бесплатная парковка и т.д.)
             handleSpecialSquare(game, currentPlayer, landedProperty);
             break;
           case "property":
-            // Обработка собственности
             if (
               landedProperty.owner &&
               landedProperty.owner.toString() !== currentPlayer.user.toString()
             ) {
-              // Собственность принадлежит другому игроку, необходимо заплатить аренду
               game.paymentPending = {
                 from: currentPlayer.user,
                 to: landedProperty.owner,
@@ -352,18 +402,23 @@ class GameController {
         }
       }
 
-      await game.save();
+       await game.save();
+    console.log("[СЕРВЕР] Игра сохранена с новым броском кубиков");
 
-      res.json({
-        game,
-        dice: [dice1, dice2],
-        position: currentPlayer.position,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Ошибка броска кубиков" });
-    }
+    // Проверим, что lastDiceRoll действительно сохранился
+    const checkGame = await Game.findById(gameId);
+    console.log("[СЕРВЕР] Проверка lastDiceRoll после сохранения:", checkGame.lastDiceRoll);
+
+    res.json({
+      game,
+      dice: [dice1, dice2],
+      position: currentPlayer.position,
+    });
+  } catch (error) {
+    console.log("[СЕРВЕР] Ошибка броска кубиков:", error);
+    res.status(500).json({ message: "Ошибка броска кубиков" });
   }
+}
 
   async buyProperty(req, res) {
     try {
@@ -376,12 +431,10 @@ class GameController {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Проверка статуса игры
       if (game.status !== "active") {
         return res.status(400).json({ message: "Игра ещё не началась" });
       }
 
-      // Получить текущего игрока
       const currentPlayer = game.players.find(
         (player) => player.user.toString() === userId
       );
@@ -392,17 +445,15 @@ class GameController {
           .json({ message: "Вы не участвуете в этой игре" });
       }
 
-      // Проверить, ход ли пользователя
+
       if (game.players[game.currentPlayerIndex].user.toString() !== userId) {
         return res.status(403).json({ message: "Сейчас не ваш ход" });
       }
 
-      // Найти свойство, на котором находится игрок
       const property = game.properties.find(
         (p) => p.id === currentPlayer.position
       );
 
-      // Проверки
       if (!property) {
         return res.status(400).json({ message: "Свойство не найдено" });
       }
@@ -440,131 +491,7 @@ class GameController {
     }
   }
   
-async botTurn(game) {
-  try {
-    // Находим индекс бота в массиве игроков
-    const botIndex = game.players.findIndex(player => 
-      player.isBot === true || 
-      (player.user && typeof player.user === 'object' && player.user.isBot === true)
-    );
-    
-    if (botIndex === -1 || game.currentPlayerIndex !== botIndex) {
-      return; // Не ход бота
-    }
-    
-    console.log("Ход бота начинается");
-    
-    // Получаем объект бота
-    const bot = game.players[botIndex];
-    
-    // 1. Бросок кубиков
-    const dice1 = Math.floor(Math.random() * 6) + 1;
-    const dice2 = Math.floor(Math.random() * 6) + 1;
-    const diceSum = dice1 + dice2;
-    
-    // Сохраняем результат броска
-    game.lastDiceRoll = {
-      dice: [dice1, dice2],
-      sum: diceSum,
-      doubles: dice1 === dice2
-    };
-    
-    // Добавляем сообщение в чат
-    game.chat.push({
-      message: `Бот-Монополист бросает кубики и выбрасывает ${dice1} и ${dice2}`,
-      timestamp: new Date()
-    });
-    
-    // Сохраняем старую позицию
-    const oldPosition = bot.position;
-    
-    // Перемещаем бота
-    bot.position = (bot.position + diceSum) % 40;
-    
-    // Проверяем проход через СТАРТ
-    if (bot.position < oldPosition) {
-      bot.money += 200;
-      game.chat.push({
-        message: `Бот-Монополист прошёл через СТАРТ и получил 200$`,
-        timestamp: new Date()
-      });
-    }
-    
-    // Получаем свойство, на которое встал бот
-    const landedProperty = game.properties.find(p => p.id === bot.position);
-    
-    // Обрабатываем действия в зависимости от поля
-    if (landedProperty) {
-      // Обрабатываем специальные клетки как в методе rollDice
-      switch(landedProperty.type) {
-        case "special":
-          handleSpecialSquare(game, bot, landedProperty);
-          break;
-        case "property":
-          // Если свойство никому не принадлежит и у бота есть деньги - покупаем с вероятностью 80%
-          if (!landedProperty.owner && bot.money >= landedProperty.price && Math.random() < 0.8) {
-            landedProperty.owner = bot.user;
-            bot.money -= landedProperty.price;
-            bot.properties.push(landedProperty.id);
-            
-            game.chat.push({
-              message: `Бот-Монополист покупает ${landedProperty.name} за ${landedProperty.price}$`,
-              timestamp: new Date()
-            });
-          } 
-          // Если свойство принадлежит игроку - платим ренту
-          else if (landedProperty.owner && landedProperty.owner.toString() !== bot.user.toString()) {
-            const rentAmount = calculateRent(landedProperty, game);
-            bot.money -= rentAmount;
-            
-            // Находим владельца собственности
-            const ownerIndex = game.players.findIndex(p => 
-              p.user.toString() === landedProperty.owner.toString()
-            );
-            
-            if (ownerIndex !== -1) {
-              game.players[ownerIndex].money += rentAmount;
-              
-              game.chat.push({
-                message: `Бот-Монополист платит ${rentAmount}$ аренды игроку ${game.players[ownerIndex].user.username} за ${landedProperty.name}`,
-                timestamp: new Date()
-              });
-            }
-          }
-          break;
-        case "tax":
-          // Платим налог
-          const taxAmount = landedProperty.id === 4 ? 200 : 100;
-          bot.money -= taxAmount;
-          
-          game.chat.push({
-            message: `Бот-Монополист платит ${taxAmount}$ налога`,
-            timestamp: new Date()
-          });
-          break;
-      }
-    }
-    
-    // Завершаем ход бота
-    setTimeout(async () => {
-      // Переход к следующему игроку
-      game.currentPlayerIndex = (game.currentPlayerIndex + 1) % game.players.length;
-      game.lastDiceRoll = null;
-      
-      game.chat.push({
-        message: `Бот-Монополист завершает ход. Ход переходит к ${game.players[game.currentPlayerIndex].user.username}`,
-        timestamp: new Date()
-      });
-      
-      await game.save();
-    }, 3000); // Небольшая задержка для реалистичности
-    
-    return game;
-  } catch (error) {
-    console.error("Ошибка в ходе бота:", error);
-    return game;
-  }
-}
+
   async endTurn(req, res) {
     try {
       const gameId = req.params.id;
@@ -576,15 +503,14 @@ async botTurn(game) {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Проверка статуса игры
       if (game.status !== "active") {
         return res.status(400).json({ message: "Игра ещё не началась" });
       }
 
-      // Проверить, ход ли пользователя
-      if (game.players[game.currentPlayerIndex].user.toString() !== userId) {
-        return res.status(403).json({ message: "Сейчас не ваш ход" });
-      }
+    const currentPlayer = game.players[game.currentPlayerIndex];
+if (currentPlayer.isBot || !currentPlayer.user || currentPlayer.user.toString() !== userId) {
+  return res.status(403).json({ message: "Сейчас не ваш ход" });
+}
 
       // Проверить, есть ли ожидающий платеж
       if (
@@ -596,14 +522,16 @@ async botTurn(game) {
           .json({ message: "Вы должны сначала заплатить аренду" });
       }
 
-      // Переход к следующему игроку
-      game.currentPlayerIndex =
-        (game.currentPlayerIndex + 1) % game.players.length;
+   game.lastDiceRoll = null;
+      game.markModified('lastDiceRoll'); // Явно указываем Mongoose, что поле изменилось
+      
+      game.paymentPending = null; 
+  game.paymentPending = null; 
 
-      // Сбросить бросок кубиков
-      game.lastDiceRoll = null;
+  // Переход к следующему игроку
+  game.currentPlayerIndex = 
+    (game.currentPlayerIndex + 1) % game.players.length;
 
-      // Добавить сообщение в чат
       game.chat.push({
         message: `Ход перешёл к ${
           game.players[game.currentPlayerIndex].user.username
@@ -615,7 +543,6 @@ async botTurn(game) {
 
           const nextPlayer = game.players[game.currentPlayerIndex];
     if (nextPlayer.isBot || (nextPlayer.user && typeof nextPlayer.user === 'object' && nextPlayer.user.isBot)) {
-      // Запускаем ход бота в фоновом режиме
       this.botTurn(game);
     }
       res.json(game);
@@ -648,7 +575,6 @@ async botTurn(game) {
 
       const { from, to, amount, propertyId } = game.paymentPending;
 
-      // Найти игроков
       const payingPlayer = game.players.find(
         (p) => p.user.toString() === from.toString()
       );
@@ -666,14 +592,11 @@ async botTurn(game) {
         });
       }
 
-      // Осуществить платеж
       payingPlayer.money -= amount;
       receivingPlayer.money += amount;
 
-      // Очистить ожидающий платеж
       game.paymentPending = null;
 
-      // Добавить сообщение в чат
       game.chat.push({
         message: `${payingPlayer.user.username} заплатил ${amount}$ игроку ${receivingPlayer.user.username} за аренду`,
         timestamp: new Date(),
@@ -699,12 +622,10 @@ async botTurn(game) {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Проверка статуса игры
       if (game.status !== "active") {
         return res.status(400).json({ message: "Игра ещё не началась" });
       }
 
-      // Найти игрока
       const player = game.players.find((p) => p.user.toString() === userId);
 
       if (!player) {
@@ -713,7 +634,6 @@ async botTurn(game) {
           .json({ message: "Вы не участвуете в этой игре" });
       }
 
-      // Найти собственность
       const property = game.properties.find(
         (p) => p.id === parseInt(propertyId)
       );
@@ -722,32 +642,27 @@ async botTurn(game) {
         return res.status(400).json({ message: "Собственность не найдена" });
       }
 
-      // Проверить, принадлежит ли собственность игроку
       if (property.owner.toString() !== userId) {
         return res
           .status(400)
           .json({ message: "Эта собственность вам не принадлежит" });
       }
 
-      // Проверить, не заложена ли уже собственность
       if (property.mortgaged) {
         return res
           .status(400)
           .json({ message: "Эта собственность уже заложена" });
       }
 
-      // Проверить, нет ли домов на этой собственности или других в той же группе
       if (property.houses > 0) {
         return res
           .status(400)
           .json({ message: "Сначала нужно продать все дома" });
       }
 
-      // Заложить собственность и выдать деньги
       property.mortgaged = true;
       player.money += Math.floor(property.price / 2);
 
-      // Добавить сообщение в чат
       game.chat.push({
         message: `${player.user.username} заложил ${
           property.name
@@ -775,12 +690,10 @@ async botTurn(game) {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Проверка статуса игры
       if (game.status !== "active") {
         return res.status(400).json({ message: "Игра ещё не началась" });
       }
 
-      // Найти игрока
       const player = game.players.find((p) => p.user.toString() === userId);
 
       if (!player) {
@@ -789,7 +702,6 @@ async botTurn(game) {
           .json({ message: "Вы не участвуете в этой игре" });
       }
 
-      // Найти собственность
       const property = game.properties.find(
         (p) => p.id === parseInt(propertyId)
       );
@@ -798,14 +710,12 @@ async botTurn(game) {
         return res.status(400).json({ message: "Собственность не найдена" });
       }
 
-      // Проверить, принадлежит ли собственность игроку
       if (property.owner.toString() !== userId) {
         return res
           .status(400)
           .json({ message: "Эта собственность вам не принадлежит" });
       }
 
-      // Проверить, заложена ли собственность
       if (!property.mortgaged) {
         return res
           .status(400)
@@ -815,18 +725,15 @@ async botTurn(game) {
       // Рассчитать сумму для выкупа (цена + 10%)
       const unmortgageAmount = Math.floor((property.price / 2) * 1.1);
 
-      // Проверить, достаточно ли денег
       if (player.money < unmortgageAmount) {
         return res
           .status(400)
           .json({ message: "У вас недостаточно денег для выкупа" });
       }
 
-      // Выкупить собственность
       property.mortgaged = false;
       player.money -= unmortgageAmount;
 
-      // Добавить сообщение в чат
       game.chat.push({
         message: `${player.user.username} выкупил ${property.name} за ${unmortgageAmount}$`,
         timestamp: new Date(),
@@ -852,12 +759,10 @@ async botTurn(game) {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Проверка статуса игры
       if (game.status !== "active") {
         return res.status(400).json({ message: "Игра ещё не началась" });
       }
 
-      // Найти игрока
       const player = game.players.find((p) => p.user.toString() === userId);
 
       if (!player) {
@@ -866,7 +771,6 @@ async botTurn(game) {
           .json({ message: "Вы не участвуете в этой игре" });
       }
 
-      // Найти собственность
       const property = game.properties.find(
         (p) => p.id === parseInt(propertyId)
       );
@@ -875,7 +779,6 @@ async botTurn(game) {
         return res.status(400).json({ message: "Собственность не найдена" });
       }
 
-      // Проверки для постройки дома
       if (property.owner.toString() !== userId) {
         return res
           .status(400)
@@ -895,7 +798,6 @@ async botTurn(game) {
         });
       }
 
-      // Проверить, владеет ли игрок всей группой собственностей
       const propertiesInGroup = game.properties.filter(
         (p) => p.group === property.group
       );
@@ -945,16 +847,13 @@ async botTurn(game) {
             .json({ message: "На этой собственности нельзя строить" });
       }
 
-      // Проверить, достаточно ли денег
       if (player.money < houseCost) {
         return res.status(400).json({ message: "У вас недостаточно денег" });
       }
 
-      // Построить дом
       property.houses += 1;
       player.money -= houseCost;
 
-      // Добавить сообщение в чат
       const buildingType = property.houses === 5 ? "отель" : "дом";
       game.chat.push({
         message: `${player.user.username} построил ${buildingType} на ${property.name} за ${houseCost}$`,
@@ -987,12 +886,10 @@ async botTurn(game) {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Проверка статуса игры
       if (game.status !== "active") {
         return res.status(400).json({ message: "Игра ещё не началась" });
       }
 
-      // Найти игроков
       const fromPlayer = game.players.find((p) => p.user.toString() === userId);
       const toPlayer = game.players.find(
         (p) => p.user.toString() === toPlayerId
@@ -1015,7 +912,6 @@ async botTurn(game) {
             });
           }
 
-          // Проверить, что нет домов на собственностях
           if (property.houses > 0) {
             return res.status(400).json({
               message:
@@ -1039,7 +935,6 @@ async botTurn(game) {
             });
           }
 
-          // Проверить, что нет домов на собственностях
           if (property.houses > 0) {
             return res
               .status(400)
@@ -1048,20 +943,18 @@ async botTurn(game) {
         }
       }
 
-      // Проверить, что у предлагающего достаточно денег
       if (offerMoney && fromPlayer.money < offerMoney) {
         return res
           .status(400)
           .json({ message: "У вас недостаточно денег для этой сделки" });
       }
 
-      // Создать новое предложение обмена
       if (!game.trades) {
         game.trades = [];
       }
 
       const newTrade = {
-        id: Date.now().toString(), // Уникальный ID для обмена
+        id: Date.now().toString(),
         from: userId,
         to: toPlayerId,
         offerProperties: offerProperties || [],
@@ -1074,7 +967,6 @@ async botTurn(game) {
 
       game.trades.push(newTrade);
 
-      // Добавить сообщение в чат
       game.chat.push({
         message: `${fromPlayer.user.username} предложил обмен игроку ${toPlayer.user.username}`,
         timestamp: new Date(),
@@ -1100,7 +992,6 @@ async botTurn(game) {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Найти предложение обмена
       const tradeIndex = game.trades.findIndex((t) => t.id === tradeId);
 
       if (tradeIndex === -1) {
@@ -1111,21 +1002,18 @@ async botTurn(game) {
 
       const trade = game.trades[tradeIndex];
 
-      // Проверить, что предложение адресовано текущему пользователю
       if (trade.to.toString() !== userId) {
         return res
           .status(403)
           .json({ message: "Это предложение обмена не для вас" });
       }
 
-      // Проверить статус предложения
       if (trade.status !== "pending") {
         return res
           .status(400)
           .json({ message: "Это предложение уже обработано" });
       }
 
-      // Найти игроков
       const fromPlayer = game.players.find(
         (p) => p.user.toString() === trade.from.toString()
       );
@@ -1133,7 +1021,6 @@ async botTurn(game) {
         (p) => p.user.toString() === trade.to.toString()
       );
 
-      // Проверить, достаточно ли денег
       if (trade.requestMoney > 0 && toPlayer.money < trade.requestMoney) {
         return res
           .status(400)
@@ -1180,7 +1067,6 @@ async botTurn(game) {
       trade.status = "accepted";
       trade.completedAt = new Date();
 
-      // Добавить сообщение в чат
       game.chat.push({
         message: `${toPlayer.user.username} принял предложение обмена от ${fromPlayer.user.username}`,
         timestamp: new Date(),
@@ -1225,7 +1111,6 @@ async botTurn(game) {
           .json({ message: "Вы не можете отклонить это предложение" });
       }
 
-      // Проверить статус предложения
       if (trade.status !== "pending") {
         return res
           .status(400)
@@ -1244,7 +1129,6 @@ async botTurn(game) {
         (p) => p.user.toString() === trade.to.toString()
       );
 
-      // Добавить сообщение в чат
       if (trade.to.toString() === userId) {
         game.chat.push({
           message: `${toPlayer.user.username} отклонил предложение обмена от ${fromPlayer.user.username}`,
@@ -1283,7 +1167,6 @@ async botTurn(game) {
         return res.status(404).json({ message: "Игра не найдена" });
       }
 
-      // Проверить, участвует ли пользователь в игре
       const player = game.players.find((p) => p.user.toString() === userId);
 
       if (!player) {
@@ -1292,7 +1175,6 @@ async botTurn(game) {
           .json({ message: "Вы не участвуете в этой игре" });
       }
 
-      // Добавить сообщение в чат
       game.chat.push({
         user: userId,
         message,

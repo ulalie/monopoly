@@ -7,7 +7,6 @@ import Login from "./components/Login";
 import SingUp from "./components/SingUp";
 import Lobby from "./components/Lobby";
 import Profile from "./components/Profile";
-import GameBoard from "./components/GameBoard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminPage from "./components/AdminPage";
 

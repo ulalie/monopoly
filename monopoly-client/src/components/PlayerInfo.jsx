@@ -1,4 +1,3 @@
-// components/PlayerInfo.js
 import React from "react";
 
 export default function PlayerInfo({
@@ -8,21 +7,30 @@ export default function PlayerInfo({
 }) {
   return (
     <div
-      className={`player-info ${isCurrentPlayer ? "current-player" : ""} ${
+      className={`player-card ${isCurrentPlayer ? "current-player" : ""} ${
         isActivePlayer ? "active-player" : ""
       }`}
     >
-      <div
-        className="player-color"
-        style={{ backgroundColor: player.color }}
-      ></div>
-      <div className="player-details">
-        <div className="player-name">{player.user.username}</div>
-        <div className="player-money">${player.money}</div>
-        <div className="player-properties">
-          Собственность: {player.properties.length}
-        </div>
+      <div className="player-name">
+        <span 
+          className="player-color-indicator" 
+          style={{ backgroundColor: player.color }}
+        ></span>
+        {player.user.username}
+        {isActivePlayer && 
+          <span className="active-marker"> (ходит)</span>}
       </div>
+      
+      <div className="player-stats">
+        <div className="player-money">${player.money}</div>
+        <div className="player-position">Позиция: {player.position}</div>
+      </div>
+      
+      {player.properties.length > 0 && (
+        <div className="player-properties">
+          Собственность: {player.properties.length} шт.
+        </div>
+      )}
     </div>
   );
 }

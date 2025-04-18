@@ -1,24 +1,25 @@
-// models/Game.js - Дополненная версия
 import { Schema, model } from "mongoose";
 
 const GameSchema = new Schema({
   name: { type: String, required: true },
   creator: { type: Schema.Types.ObjectId, ref: "User", required: true },
-  players: [
-    {
-      user: { type: Schema.Types.ObjectId, ref: "User" },
-      position: { type: Number, default: 0 },
-      money: { type: Number, default: 1500 },
-      properties: [{ type: Number }], // ID собственности
-      jailStatus: { type: Boolean, default: false },
-      color: { type: String },
-      bankrupt: { type: Boolean, default: false },
-    },
-  ],
+players: [
+  {
+    user: { type: Schema.Types.ObjectId, ref: "User" },
+    position: { type: Number, default: 0 },
+    money: { type: Number, default: 1500 },
+    properties: [{ type: Number }],
+    jailStatus: { type: Boolean, default: false },
+    color: { type: String },
+    bankrupt: { type: Boolean, default: false },
+    isBot: { type: Boolean, default: false },
+    botName: { type: String }, 
+  },
+],
   maxPlayers: { type: Number, default: 4 },
   gameType: {
     type: String,
-    enum: ["classic", "with-bots", "tournament"],
+    enum: ["classic", "with-bots"],
     default: "classic",
   },
   status: {

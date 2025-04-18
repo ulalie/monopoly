@@ -1,1 +1,1 @@
-export const secret = "SECRET_KEY_HERE";
+export const secret = "HERE_SECRET_KEY";

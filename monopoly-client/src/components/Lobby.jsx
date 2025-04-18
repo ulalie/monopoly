@@ -38,7 +38,6 @@ export default function Lobby() {
         return;
       }
 
-      // Проверка на наличие имени игры
       if (!newGameName.trim() || maxPlayers <= 0) {
         throw new Error(
           "Пожалуйста, введите корректное название игры и количество игроков."
@@ -53,18 +52,19 @@ export default function Lobby() {
         },
         body: JSON.stringify({
           name: newGameName,
-          maxPlayers: parseInt(maxPlayers), // Конвертация в число
+          maxPlayers: parseInt(maxPlayers),
           gameType: includeBot ? "with-bots" : "classic",
+          botCount: includeBot ? 1 : 0
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json(); // Попробуйте получить более детальную ошибку
+        const errorData = await response.json();
         throw new Error(errorData.message || "Не удалось создать игру");
       }
 
       const newGame = await response.json();
-      setGames((prevGames) => [...prevGames, newGame]); // Использование функции обновления состояния
+      setGames((prevGames) => [...prevGames, newGame]);
       setNewGameName("");
 
       navigate(`/game/${newGame._id}`);
@@ -96,7 +96,6 @@ export default function Lobby() {
         throw new Error("Не удалось присоединиться к игре");
       }
 
-      // Перенаправление в игру
       navigate(`/game/${gameId}`);
     } catch (err) {
       setError(err.message);
@@ -124,7 +123,7 @@ export default function Lobby() {
           </div>
 
           <div className="form-group">
-            <label>Максимум игроков:</label>
+            <label>Максимум игроков (включая бота):</label>
             <select
               value={maxPlayers}
               onChange={(e) => setMaxPlayers(e.target.value)}
@@ -136,15 +135,20 @@ export default function Lobby() {
             </select>
           </div>
 
- <label>
-    <input
-      type="checkbox"
-      checked={includeBot}
-      onChange={(e) => setIncludeBot(e.target.checked)}
-    />
-    Добавить бота в игру
-  </label>
-  
+          <div className="form-group">
+            <label>
+              <input
+                type="checkbox"
+                checked={includeBot}
+                onChange={(e) => setIncludeBot(e.target.checked)}
+              />
+              Добавить бота в игру
+            </label>
+            {includeBot && (
+              <p className="hint">Бот будет добавлен как дополнительный игрок</p>
+            )}
+          </div>
+          
           <button type="submit">Создать игру</button>
         </form>
       </div>
@@ -163,6 +167,7 @@ export default function Lobby() {
               </p>
               <p>
                 Игроки: {game.players.length}/{game.maxPlayers}
+                {game.botCount > 0 && ` (включая ${game.botCount} ботов)`}
               </p>
               <button
                 onClick={() => joinGame(game._id)}

@@ -7,6 +7,7 @@ export default function GameChat({ game, gameId }) {
 
   useEffect(() => {
     if (game.chat) {
+      console.log("Получены сообщения чата:", game.chat);
       setChatMessages(game.chat);
     }
     scrollToBottom();
@@ -57,7 +58,13 @@ export default function GameChat({ game, gameId }) {
         ) : (
           chatMessages.map((msg, index) => (
             <div key={index} className="chat-message">
-              <strong>{msg.user.username}:</strong> {msg.message}
+              {/* Обрабатываем разные форматы сообщений */}
+              {msg.user ? (
+                <><strong>{msg.user.username}:</strong> {msg.message}</>
+              ) : (
+                // Системные сообщения без пользователя
+                <><strong>Система:</strong> {msg.message}</>
+              )}
             </div>
           ))
         )}

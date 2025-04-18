@@ -92,7 +92,6 @@ export default function Profile() {
         <img
           src={
             userData.avatar
-            //    || `https://avatars.dicebear.com/api/initials/${userData.username}.svg`
           }
           alt="Аватар пользователя"
           className="profile-avatar"
