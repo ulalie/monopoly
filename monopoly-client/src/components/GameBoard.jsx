@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 
-export default function GameBoard({ game, currentPlayer, diceRoll }) {
+export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyClick }) {
 
   useEffect(() => {
     console.log("Игровые данные получены:", {
@@ -164,7 +164,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll }) {
           <div 
             key={index}
             className={`board-square ${property.owner ? 'owned' : ''}${isCorner ? 'corner-square' : ''}`}
-            
+            onClick={() => onPropertyClick(property)}
             style={{
               position: 'absolute',
               left: `${x}px`,
@@ -178,7 +178,8 @@ export default function GameBoard({ game, currentPlayer, diceRoll }) {
               flexDirection: 'column',
               justifyContent: 'space-between',
               padding: '2px',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              cursor: 'pointer'
             }}
           >
             {/* Цветная полоса для группы */}

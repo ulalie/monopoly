@@ -58,11 +58,9 @@ export default function GameChat({ game, gameId }) {
         ) : (
           chatMessages.map((msg, index) => (
             <div key={index} className="chat-message">
-              {/* Обрабатываем разные форматы сообщений */}
               {msg.user ? (
                 <><strong>{msg.user.username}:</strong> {msg.message}</>
               ) : (
-                // Системные сообщения без пользователя
                 <><strong>Система:</strong> {msg.message}</>
               )}
             </div>

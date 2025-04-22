@@ -1,72 +1,51 @@
 import React from "react";
 
-export default function GameActions({
+const GameActions = ({
   canRollDice,
   canBuyProperty,
   canEndTurn,
   onRollDice,
   onBuyProperty,
   onEndTurn,
-}) {
-  console.log("Состояние кнопок:", { canRollDice, canBuyProperty, canEndTurn });
-
+  canTrade,
+  onOpenTradeModal
+}) => {
   return (
-    <div className="game-actions" style={{
-      display: 'flex',
-      justifyContent: 'center',
-      gap: '10px',
-      marginTop: '20px'
-    }}>
-      <button
-        onClick={canRollDice ? onRollDice : undefined}
+    <div className="game-actions">
+      <button 
+        className={`action-button ${canRollDice ? 'active' : 'disabled'}`}
+        onClick={onRollDice} 
         disabled={!canRollDice}
-        className={`action-button ${canRollDice ? "active" : "disabled"}`}
-        style={{
-          padding: '10px 16px',
-          backgroundColor: canRollDice ? '#5D5CDE' : '#ccc',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: canRollDice ? 'pointer' : 'not-allowed',
-          fontWeight: 'bold'
-        }}
       >
         Бросить кубики
       </button>
-
-      <button
-        onClick={canBuyProperty ? onBuyProperty : undefined}
+      
+      <button 
+        className={`action-button ${canBuyProperty ? 'active' : 'disabled'}`}
+        onClick={onBuyProperty}
         disabled={!canBuyProperty}
-        className={`action-button ${canBuyProperty ? "active" : "disabled"}`}
-        style={{
-          padding: '10px 16px',
-          backgroundColor: canBuyProperty ? '#5D5CDE' : '#ccc',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: canBuyProperty ? 'pointer' : 'not-allowed',
-          fontWeight: 'bold'
-        }}
       >
         Купить собственность
       </button>
-
-      <button
-        onClick={canEndTurn ? onEndTurn : undefined}
+      
+      <button 
+        className={`action-button ${canEndTurn ? 'active' : 'disabled'}`}
+        onClick={onEndTurn}
         disabled={!canEndTurn}
-        className={`action-button ${canEndTurn ? "active" : "disabled"}`}
-        style={{
-          padding: '10px 16px',
-          backgroundColor: canEndTurn ? '#5D5CDE' : '#ccc',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: canEndTurn ? 'pointer' : 'not-allowed',
-          fontWeight: 'bold'
-        }}
       >
         Завершить ход
       </button>
+      
+      {canTrade && (
+        <button 
+          className="action-button trade-button"
+          onClick={onOpenTradeModal}
+        >
+          Предложить обмен
+        </button>
+      )}
     </div>
   );
-}
+};
+
+export default GameActions;
