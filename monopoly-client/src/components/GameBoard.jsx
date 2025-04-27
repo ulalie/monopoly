@@ -2,17 +2,11 @@ import React, { useEffect } from "react";
 
 export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyClick }) {
 
-  useEffect(() => {
-    console.log("Игровые данные получены:", {
-      игроки: game.players.length,
-      свойства: game.properties.length,
-      текущийИгрок: currentPlayer
-    });
-  }, [game, currentPlayer]);
 
- 
-  const boardSize = 800;
-  const squareSize = boardSize / 11;
+  const boardSize = 760; // Общий размер доски
+  const cornerSize = 110; // Размер угловых клеток
+  const propertyWidth = 60; // Ширина неугловых клеток
+  const propertyHeight = 110; // Высота неугловых клеток
 
   const getPropertyByPosition = (position) => {
     return game.properties.find(p => p.id === position);
@@ -40,20 +34,20 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
     
     if (position <= 10) {
       // Нижний ряд (справа налево)
-      x = boardSize - ((position + 1) * squareSize);
-      y = boardSize - squareSize;
+      x = boardSize - cornerSize - (position * propertyWidth);
+      y = boardSize - propertyHeight;
     } else if (position <= 20) {
       // Левая колонка (снизу вверх)
       x = 0;
-      y = boardSize - ((position - 10 + 1) * squareSize);
+      y = boardSize - cornerSize - ((position - 10) * propertyWidth);
     } else if (position <= 30) {
       // Верхний ряд (слева направо)
-      x = (position - 20) * squareSize;
+      x = cornerSize + ((position - 21) * propertyWidth);
       y = 0;
     } else {
       // Правая колонка (сверху вниз)
-      x = boardSize - squareSize;
-      y = (position - 30) * squareSize;
+      x = boardSize - propertyHeight;
+      y = cornerSize + ((position - 31) * propertyWidth);
     }
     
     // Смещение для нескольких игроков на одной позиции
@@ -61,8 +55,8 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
     const offsetY = Math.floor(index / 2) * 15;
     
     return { 
-      x: x + offsetX + 20, 
-      y: y + offsetY + 20
+      x: x + offsetX + 5, 
+      y: y + offsetY + 5
     };
   };
   
@@ -89,16 +83,17 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
         margin: '0 auto',
         backgroundColor: '#e9f5e9',
         border: '2px solid #128c7e',
-        borderRadius: '8px'
+        borderRadius: '8px',
+        overflow: 'hidden' // Добавлено, чтобы содержимое не выходило за границы
       }}
     >
       {/* Центральная область доски */}
       <div style={{
         position: 'absolute',
-        left: `${squareSize}px`,
-        top: `${squareSize}px`,
-        width: `${boardSize - 2 * squareSize}px`,
-        height: `${boardSize - 2 * squareSize}px`,
+        left: `${cornerSize}px`,
+        top: `${cornerSize}px`,
+        width: `${boardSize - 2 * cornerSize}px`,
+        height: `${boardSize - 2 * cornerSize}px`,
         backgroundColor: '#f8f8f8',
         display: 'flex',
         justifyContent: 'center',
@@ -115,38 +110,56 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
       {Array.from({ length: 40 }).map((_, index) => {
         const property = getPropertyByPosition(index);
         if (!property) return null;
-        
-        // Вычисление координат для клетки
+
         let x, y, width, height;
-        
-        if (index <= 10) {
-          // Нижний ряд
-          x = boardSize - ((index + 1) * squareSize);
-          y = boardSize - squareSize;
-          width = index === 0 ? squareSize : squareSize;
-          height = squareSize;
-        } else if (index <= 20) {
-          // Левая колонка
-          x = 0;
-          y = boardSize - ((index - 10 + 1) * squareSize);
-          width = squareSize;
-          height = index === 20 ? squareSize : squareSize;
-        } else if (index <= 30) {
-          // Верхний ряд
-          x = (index - 20) * squareSize;
-          y = 0;
-          width = index === 30 ? squareSize : squareSize;
-          height = squareSize;
-        } else {
-          // Правая колонка
-          x = boardSize - squareSize;
-          y = (index - 30) * squareSize;
-          width = squareSize;
-          height = squareSize;
-        }
-        
-        // Угловые клетки чуть больше
         const isCorner = index === 0 || index === 10 || index === 20 || index === 30;
+
+        if (isCorner) {
+          // Угловые клетки
+          width = cornerSize;
+          height = cornerSize;
+
+          if (index === 0) {
+            x = boardSize - cornerSize;
+            y = boardSize - cornerSize;
+          } else if (index === 10) {
+            x = 0;
+            y = boardSize - cornerSize;
+          } else if (index === 20) {
+            x = 0;
+            y = 0;
+          } else if (index === 30) {
+            x = boardSize - cornerSize;
+            y = 0;
+          }
+        } else {
+          // Обычные клетки
+          if (index <= 10) {
+            // Нижний ряд (справа налево)
+            x = boardSize - cornerSize - (index * propertyWidth);
+            y = boardSize - propertyHeight;
+            width = propertyWidth;
+            height = propertyHeight;
+          } else if (index <= 20) {
+            // Левая колонка (снизу вверх)
+            x = 0;
+            y = boardSize - cornerSize - ((index - 10) * propertyWidth);
+            width = propertyHeight;
+            height = propertyWidth;
+          } else if (index <= 30) {
+            // Верхний ряд (слева направо)
+            x = cornerSize + ((index - 21) * propertyWidth);
+            y = 0;
+            width = propertyWidth;
+            height = propertyHeight;
+          } else {
+            // Правая колонка (сверху вниз)
+            x = boardSize - propertyHeight;
+            y = cornerSize + ((index - 31) * propertyWidth);
+            width = propertyHeight;
+            height = propertyWidth;
+          }
+        }
         
         // Цвет клетки в зависимости от владельца
         let backgroundColor = '#f9f9f9';
@@ -248,8 +261,8 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
             }}
           >
             {player.isBot 
-  ? (player.botName?.[0] || 'B') 
-  : (player.user?.username?.[0] || '?')}
+              ? (player.botName?.[0] || 'B') 
+              : (player.user?.username?.[0] || '?')}
           </div>
         );
       })}

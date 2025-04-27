@@ -25,7 +25,7 @@ export default function GameChat({ game, gameId }) {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        `http://localhost:5000/game/${gameId}/chat`,
+        `http://localhost:8080/game/${gameId}/chat`,
         {
           method: "POST",
           headers: {
