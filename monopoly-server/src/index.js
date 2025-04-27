@@ -3,7 +3,7 @@ import cors from "cors";
 import { connect } from "mongoose";
 import authRouter from "./routes/authRouter.js";
 import gameRouter from "./routes/gameRouter.js";
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 
 const app = express();
 

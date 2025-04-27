@@ -20,7 +20,7 @@ export default function Profile() {
 
         console.log("Отправляем запрос к API /auth/profile");
         try {
-          const response = await fetch("http://localhost:5000/auth/profile", {
+          const response = await fetch("http://localhost:8080/auth/profile", {
             headers: {
               Authorization: `Bearer ${token}`,
             },

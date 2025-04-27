@@ -7,7 +7,7 @@ export default function SingUp() {
   const handleRegister = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:5000/auth/registration", {
+      const response = await fetch("http://localhost:8080/auth/registration", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

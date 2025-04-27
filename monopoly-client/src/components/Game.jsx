@@ -66,7 +66,7 @@ export default function Game() {
         return;
       }
 
-      const response = await fetch(`http://localhost:5000/game/${id}`, {
+      const response = await fetch(`http://localhost:8080/game/${id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -137,7 +137,7 @@ export default function Game() {
       console.log("Отправка запроса к серверу");
       
       const response = await fetch(
-        `http://localhost:5000/game/${id}/roll-dice`,
+        `http://localhost:8080/game/${id}/roll-dice`,
         {
           method: "POST",
           headers: {
@@ -199,7 +199,7 @@ export default function Game() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/buy-property`,
+        `http://localhost:8080/game/${id}/buy-property`,
         {
           method: "POST",
           headers: {
@@ -235,7 +235,7 @@ export default function Game() {
       console.log("Отправка запроса к серверу");
       
       const response = await fetch(
-        `http://localhost:5000/game/${id}/end-turn`,
+        `http://localhost:8080/game/${id}/end-turn`,
         {
           method: "POST",
           headers: {
@@ -284,7 +284,7 @@ export default function Game() {
       
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/start`,
+        `http://localhost:8080/game/${id}/start`,
         {
           method: "POST",
           headers: {
@@ -311,7 +311,7 @@ export default function Game() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/join`,
+        `http://localhost:8080/game/${id}/join`,
         {
           method: "POST",
           headers: {
@@ -337,7 +337,7 @@ export default function Game() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/leave`,
+        `http://localhost:8080/game/${id}/leave`,
         {
           method: "POST",
           headers: {
@@ -372,7 +372,7 @@ export default function Game() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/build`,
+        `http://localhost:8080/game/${id}/build`,
         {
           method: "POST",
           headers: {
@@ -403,7 +403,7 @@ export default function Game() {
       console.log(`Отправка запроса на залог собственности: ${propertyId}, gameId: ${id}`);
       
       const response = await fetch(
-        `http://localhost:5000/game/${id}/mortgage`,
+        `http://localhost:8080/game/${id}/mortgage`,
         {
           method: "POST",
           headers: {
@@ -441,7 +441,7 @@ export default function Game() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/unmortgage`,
+        `http://localhost:8080/game/${id}/unmortgage`,
         {
           method: "POST",
           headers: {
@@ -475,7 +475,7 @@ const proposeTrade = async (tradeData) => {
   try {
     const token = localStorage.getItem("token");
     const response = await fetch(
-      `http://localhost:5000/game/${id}/trade`,
+      `http://localhost:8080/game/${id}/trade`,
       {
         method: "POST",
         headers: {
@@ -513,7 +513,7 @@ const proposeTrade = async (tradeData) => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/trade/${tradeId}/accept`,
+        `http://localhost:8080/game/${id}/trade/${tradeId}/accept`,
         {
           method: "POST",
           headers: {
@@ -541,7 +541,7 @@ const proposeTrade = async (tradeData) => {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/game/${id}/trade/${tradeId}/reject`,
+        `http://localhost:8080/game/${id}/trade/${tradeId}/reject`,
         {
           method: "POST",
           headers: {

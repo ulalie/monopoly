@@ -7,7 +7,7 @@ export default function AdminPage() {
     const fetchUsers = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:5000/auth/users", {
+        const response = await fetch("http://localhost:8080/auth/users", {
           headers: {
             Authorization: `Bearer ${token}`,
           },

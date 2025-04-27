@@ -27,7 +27,7 @@ export default function Lobby() {
       setLoading(true);
       
       // Если у вас уже реализована серверная пагинация, используйте:
-      const response = await fetch(`http://localhost:5000/game/list?page=${page}&limit=${limit}`);
+      const response = await fetch(`http://localhost:8080/game/list?page=${page}&limit=${limit}`);
       
       // Если серверной пагинации нет, используйте клиентскую пагинацию:
       // const response = await fetch("http://localhost:5000/game/list");
@@ -77,7 +77,7 @@ export default function Lobby() {
         );
       }
 
-      const response = await fetch("http://localhost:5000/game/create", {
+      const response = await fetch("http://localhost:8080/game/create", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -118,7 +118,7 @@ export default function Lobby() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/game/${gameId}/join`,
+        `http://localhost:8080/game/${gameId}/join`,
         {
           method: "POST",
           headers: {
