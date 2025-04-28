@@ -1,8 +1,6 @@
-import React, { useEffect } from "react";
+//import React, { useEffect } from "react";
 
 export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyClick }) {
-
-
   const boardSize = 760; // Общий размер доски
   const cornerSize = 110; // Размер угловых клеток
   const propertyWidth = 60; // Ширина неугловых клеток
@@ -58,6 +56,104 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
       x: x + offsetX + 5, 
       y: y + offsetY + 5
     };
+  };
+  
+  // Функция для рендеринга домов на собственности
+  const renderBuildings = (property, x, y, width, height, position) => {
+    if (!property.houses || property.houses === 0 || property.type !== "property") {
+      return null;
+    }
+
+    // Определяем, будут ли дома отрисовываться горизонтально или вертикально
+    const isHorizontal = position <= 10 || (position > 20 && position <= 30);
+    
+    // Определяем размер и отступы для домов
+    const houseSize = 8;
+    const hotelSize = 12; 
+    let houseStyle = {};
+    let housesContainerStyle = {};
+    
+    if (property.houses === 5) {
+      // Отель
+      if (isHorizontal) {
+        housesContainerStyle = {
+          position: 'absolute',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          top: position <= 10 ? '25%' : '60%',
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center'
+        };
+        houseStyle = {
+          width: `${hotelSize}px`,
+          height: `${hotelSize}px`,
+          backgroundColor: '#C41E3A',
+          border: '1px solid #8B0000'
+        };
+      } else {
+        housesContainerStyle = {
+          position: 'absolute',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          left: position <= 20 ? '60%' : '25%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        };
+        houseStyle = {
+          width: `${hotelSize}px`,
+          height: `${hotelSize}px`,
+          backgroundColor: '#C41E3A',
+          border: '1px solid #8B0000'
+        };
+      }
+      
+      return (
+        <div style={housesContainerStyle}>
+          <div style={houseStyle}></div>
+        </div>
+      );
+    } else {
+      // Дома (от 1 до 4)
+      if (isHorizontal) {
+        housesContainerStyle = {
+          position: 'absolute',
+          left: '0',
+          right: '0',
+          top: position <= 10 ? '25%' : '60%',
+          display: 'flex',
+          justifyContent: 'space-evenly'
+        };
+      } else {
+        housesContainerStyle = {
+          position: 'absolute',
+          top: '0',
+          bottom: '0',
+          left: position <= 20 ? '60%' : '25%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-evenly'
+        };
+      }
+      
+      return (
+        <div style={housesContainerStyle}>
+          {Array(property.houses).fill().map((_, i) => (
+            <div 
+              key={i}
+              style={{
+                width: `${houseSize}px`,
+                height: `${houseSize}px`,
+                backgroundColor: '#3CB043',
+                border: '1px solid #2E8B57'
+              }}
+            ></div>
+          ))}
+        </div>
+      );
+    }
   };
   
   // Группировка игроков по позиции для корректного отображения
@@ -226,6 +322,29 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
                 ${property.price}
               </div>
             )}
+            
+            {/* Индикатор заложенной собственности */}
+            {property.mortgaged && (
+              <div style={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%) rotate(-35deg)',
+                backgroundColor: 'rgba(255, 0, 0, 0.7)',
+                color: 'white',
+                fontSize: '8px',
+                padding: '1px 3px',
+                borderRadius: '2px',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+                zIndex: 5
+              }}>
+                ЗАЛОЖЕНО
+              </div>
+            )}
+            
+            {/* Отрисовка домов/отелей на собственности */}
+            {renderBuildings(property, x, y, width, height, index)}
           </div>
         );
       })}

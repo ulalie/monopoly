@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import GameBoard from "./GameBoard";
-import PlayerInfo from "./PlayerInfo";
-import GameActions from "./GameActions";
-import GameChat from "./GameChat";
-import TradeModal from "./TradeModal";
-import TradeOffers from "./TradeOffer";
-import PropertyManagementModal from "./PropertyManagementModal";
+import GameBoard from "../components/game/board/GameBoard";
+import PlayerInfo from "../components/game/player/PlayerInfo";
+import GameActions from "../components/game/actions/GameActions";
+import GameChat from "../components/game/chat/GameChat";
+import TradeModal from "../components/game/trades/TradeModal";
+import TradeOffers from "../components/game/trades/TradeOffer";
+import PropertyManagementModal from "../components/game/modals/PropertyManagementModal";
 
 export default function Game() {
   const { id } = useParams();
@@ -21,6 +21,7 @@ export default function Game() {
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+  const [updateIntervalId, setUpdateIntervalId] = useState(null);
 
   const handleApiError = (error, message) => {
     console.error(message, error);
@@ -31,8 +32,14 @@ export default function Game() {
 
   useEffect(() => {
     fetchGameData();
+    // Сохраняем ID интервала, чтобы потом можно было его очистить
     const intervalId = setInterval(fetchGameData, 5000);
-    return () => clearInterval(intervalId);
+    setUpdateIntervalId(intervalId);
+    
+    return () => {
+      clearInterval(intervalId);
+      if (window.updateTimeoutId) clearTimeout(window.updateTimeoutId);
+    };
   }, [id]);
 
   const canStartGame = () => {
@@ -60,6 +67,12 @@ export default function Game() {
 
   const fetchGameData = async () => {
     try {
+      // Проверяем состояние всех модальных окон
+      if (isTradeModalOpen || isPropertyModalOpen) {
+        console.log(`Пропуск обновления данных, т.к. открыто модальное окно (trade: ${isTradeModalOpen}, property: ${isPropertyModalOpen})`);
+        return;
+      }
+      
       const token = localStorage.getItem("token");
       if (!token) {
         navigate("/auth/login");
@@ -361,11 +374,25 @@ export default function Game() {
   const handlePropertyClick = (property) => {
     setSelectedProperty(property);
     setIsPropertyModalOpen(true);
+    
+    // Останавливаем автоматическое обновление на время открытия модального окна
+    if (updateIntervalId) {
+      clearInterval(updateIntervalId);
+    }
   };
 
   const closePropertyModal = () => {
     setIsPropertyModalOpen(false);
     setSelectedProperty(null);
+    
+    // Восстанавливаем автоматическое обновление
+    if (!updateIntervalId) {
+      const newIntervalId = setInterval(fetchGameData, 5000);
+      setUpdateIntervalId(newIntervalId);
+    }
+    
+    // Запускаем обновление сразу после закрытия модального окна
+    setTimeout(fetchGameData, 100);
   };
 
   const buildHouse = async (propertyId) => {
@@ -471,43 +498,86 @@ export default function Game() {
     }
   };
 
-const proposeTrade = async (tradeData) => {
-  try {
-    const token = localStorage.getItem("token");
-    const response = await fetch(
-      `http://localhost:8080/game/${id}/trade`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(tradeData)
-      }
-    );
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || "Не удалось предложить обмен");
+  const openTradeModal = () => {
+    console.log("Открываем модальное окно обмена");
+    setIsTradeModalOpen(true);
+    
+    // Останавливаем автоматическое обновление на время открытия модального окна
+    if (updateIntervalId) {
+      clearInterval(updateIntervalId);
     }
+    
+    // Устанавливаем таймер автоматического закрытия через 3 минуты
+    window.updateTimeoutId = setTimeout(() => {
+      console.log("Автоматическое закрытие модального окна через 3 минуты");
+      setIsTradeModalOpen(false);
+      
+      // Восстанавливаем автоматическое обновление
+      if (!updateIntervalId) {
+        const newIntervalId = setInterval(fetchGameData, 5000);
+        setUpdateIntervalId(newIntervalId);
+      }
+      
+      fetchGameData();
+    }, 180000); // 3 минуты
+  };
 
-    const data = await response.json();
-    setGame(data.game);
+  const closeTradeModal = () => {
+    console.log("Закрываем модальное окно обмена");
     setIsTradeModalOpen(false);
     
-    if (data.botRejected) {
-      setNotification(`Бот отклонил предложение: ${data.rejectionReason || "Предложение невыгодно"}`);
-    } else if (data.trade && data.trade.status === "accepted") {
-      setNotification("Бот принял предложение обмена");
-    } else {
-      setNotification("Предложение обмена отправлено");
+    // Отменяем таймер автоматического закрытия
+    if (window.updateTimeoutId) {
+      clearTimeout(window.updateTimeoutId);
     }
     
-    setTimeout(() => setNotification(""), 5000);
-  } catch (err) {
-    handleApiError(err, err.message || "Ошибка отправки предложения обмена");
-  }
-};
+    // Восстанавливаем автоматическое обновление
+    if (!updateIntervalId) {
+      const newIntervalId = setInterval(fetchGameData, 5000);
+      setUpdateIntervalId(newIntervalId);
+    }
+    
+    // Запускаем обновление сразу после закрытия модального окна
+    setTimeout(fetchGameData, 100);
+  };
+
+  const proposeTrade = async (tradeData) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:8080/game/${id}/trade`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(tradeData)
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Не удалось предложить обмен");
+      }
+
+      const data = await response.json();
+      setGame(data.game);
+      closeTradeModal();
+      
+      if (data.botRejected) {
+        setNotification(`Бот отклонил предложение: ${data.rejectionReason || "Предложение невыгодно"}`);
+      } else if (data.trade && data.trade.status === "accepted") {
+        setNotification("Бот принял предложение обмена");
+      } else {
+        setNotification("Предложение обмена отправлено");
+      }
+      
+      setTimeout(() => setNotification(""), 5000);
+    } catch (err) {
+      handleApiError(err, err.message || "Ошибка отправки предложения обмена");
+    }
+  };
 
   const acceptTrade = async (tradeId) => {
     try {
@@ -565,6 +635,25 @@ const proposeTrade = async (tradeData) => {
     }
   };
 
+  const resetModals = () => {
+    console.log("Сброс состояния модальных окон");
+    // Отменяем таймер автоматического закрытия
+    if (window.updateTimeoutId) {
+      clearTimeout(window.updateTimeoutId);
+    }
+    
+    setIsTradeModalOpen(false);
+    setIsPropertyModalOpen(false);
+    
+    // Восстанавливаем автоматическое обновление
+    if (!updateIntervalId) {
+      const newIntervalId = setInterval(fetchGameData, 5000);
+      setUpdateIntervalId(newIntervalId);
+    }
+    
+    setTimeout(fetchGameData, 100);
+  };
+
   const getActionState = () => {
     console.log("Проверка состояния действий:", {
       isPlayerTurn,
@@ -572,7 +661,6 @@ const proposeTrade = async (tradeData) => {
       diceRoll
     });
     
-
     const canRollDice = isPlayerTurn && !game?.lastDiceRoll && !diceRoll;
     
     const canBuyProperty = isPlayerTurn && 
@@ -626,6 +714,38 @@ const proposeTrade = async (tradeData) => {
         }}
       >
         {"🔄 Обновить"}
+      </button>
+      
+      <button 
+        onClick={resetModals} 
+        style={{
+          position: "absolute",
+          top: "15px",
+          right: "120px",
+          padding: "5px 10px",
+          backgroundColor: "#f8f9fa",
+          border: "1px solid #ddd",
+          borderRadius: "3px",
+          cursor: "pointer"
+        }}
+      >
+        {"🔄 Сбросить модалки"}
+      </button>
+      
+      <button 
+        onClick={() => window.location.reload()}
+        style={{
+          position: "absolute",
+          top: "15px",
+          right: "260px",
+          padding: "5px 10px",
+          backgroundColor: "#f8f9fa",
+          border: "1px solid #ddd",
+          borderRadius: "3px",
+          cursor: "pointer"
+        }}
+      >
+        {"🔄 Перезагрузить"}
       </button>
       
       {notification && (
@@ -735,7 +855,7 @@ const proposeTrade = async (tradeData) => {
                 onEndTurn={endTurn}
                 // Добавляем кнопку обмена
                 canTrade={canTradeInActiveGame}
-                onOpenTradeModal={() => setIsTradeModalOpen(true)}
+                onOpenTradeModal={openTradeModal}
               />
         
               {/* Статус текущего хода */}
@@ -768,7 +888,7 @@ const proposeTrade = async (tradeData) => {
       {isPlayer && (
         <TradeModal
           isOpen={isTradeModalOpen}
-          onClose={() => setIsTradeModalOpen(false)}
+          onClose={closeTradeModal}
           game={game}
           currentPlayer={currentPlayer}
           onProposeTrade={proposeTrade}

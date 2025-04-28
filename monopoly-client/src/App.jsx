@@ -1,14 +1,14 @@
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.css";
-import Game from "./components/Game";
-import Home from "./components/Home";
-import Login from "./components/Login";
-import SingUp from "./components/SingUp";
-import Lobby from "./components/Lobby";
-import Profile from "./components/Profile";
+import Game from "./pages/Game";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import SingUp from "./pages/SingUp";
+import Lobby from "./pages/Lobby";
+import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
-import AdminPage from "./components/AdminPage";
+import AdminPage from "./pages/AdminPage";
 
 export default function App() {
   return (
