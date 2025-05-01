@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GameBoard from "../components/game/board/GameBoard";
 import PlayerInfo from "../components/game/player/PlayerInfo";
@@ -21,11 +21,6 @@ export default function Game() {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
   const [updateIntervalId, setUpdateIntervalId] = useState(null);
-  
-  // Хранение позиции прокрутки
-  const scrollPositionRef = useRef(0);
-  const isUpdatingRef = useRef(false);
-  const gameContainerRef = useRef(null);
 
   const handleApiError = (error, message) => {
     console.error(message, error);
@@ -33,45 +28,6 @@ export default function Game() {
     setNotification(`Ошибка: ${message}`);
     setTimeout(() => setNotification(""), 5000);
   };
-
-  // Для сохранения позиции скролла перед обновлением данных
-  const saveScrollPosition = () => {
-    scrollPositionRef.current = window.scrollY;
-  };
-
-  // Для восстановления позиции скролла после обновления данных
-  const restoreScrollPosition = () => {
-    // Устанавливаем небольшую задержку, чтобы DOM успел обновиться
-    setTimeout(() => {
-      window.scrollTo(0, scrollPositionRef.current);
-      isUpdatingRef.current = false;
-    }, 50);
-  };
-
-  // Добавляем обработчик прокрутки, чтобы обнаружить ручную прокрутку пользователем
-  useEffect(() => {
-    let scrollTimeout;
-    
-    const handleScroll = () => {
-      // Если это не программная прокрутка во время обновления,
-      // запоминаем новую позицию как пользовательскую
-      if (!isUpdatingRef.current) {
-        scrollPositionRef.current = window.scrollY;
-      }
-      
-      clearTimeout(scrollTimeout);
-      scrollTimeout = setTimeout(() => {
-        // После завершения прокрутки, позволим обновлению данных
-      }, 200);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      clearTimeout(scrollTimeout);
-    };
-  }, []);
 
   useEffect(() => {
     fetchGameData();
@@ -110,21 +66,11 @@ export default function Game() {
 
   const fetchGameData = async () => {
     try {
-      // Если мы находимся в процессе обновления, пропускаем этот цикл
-      if (isUpdatingRef.current) {
-        console.log("Пропуск обновления, предыдущее обновление еще не завершено");
-        return;
-      }
-      
       // Проверяем состояние всех модальных окон
       if (isTradeModalOpen || isPropertyModalOpen) {
         console.log(`Пропуск обновления данных, т.к. открыто модальное окно (trade: ${isTradeModalOpen}, property: ${isPropertyModalOpen})`);
         return;
       }
-      
-      // Сохраняем текущую позицию прокрутки
-      saveScrollPosition();
-      isUpdatingRef.current = true;
       
       const token = localStorage.getItem("token");
       if (!token) {
@@ -144,20 +90,7 @@ export default function Game() {
 
       const gameData = await response.json();
       
-      // Обновляем состояния в правильном порядке
-      setGame(prevGame => {
-        // Если игра существенно не изменилась, не обновляем состояние
-        if (prevGame && 
-            JSON.stringify(prevGame.players.map(p => p.position)) === 
-            JSON.stringify(gameData.players.map(p => p.position)) &&
-            prevGame.currentPlayerIndex === gameData.currentPlayerIndex &&
-            prevGame.lastDiceRoll === gameData.lastDiceRoll) {
-          console.log("Пропуск обновления - игра не изменилась существенно");
-          isUpdatingRef.current = false;
-          return prevGame;
-        }
-        return gameData;
-      });
+      setGame(gameData);
 
       const tokenParts = token.split(".");
       const payload = JSON.parse(atob(tokenParts[1]));
@@ -184,14 +117,11 @@ export default function Game() {
       });
 
       setDiceRoll(gameData.lastDiceRoll ? gameData.lastDiceRoll.dice : null);
+
       setLoading(false);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка загрузки данных игры");
       setLoading(false);
-      isUpdatingRef.current = false;
     }
   };
 
@@ -246,9 +176,6 @@ export default function Game() {
         gameLastDiceRoll: data.game?.lastDiceRoll
       });
       
-      // Сохраняем текущую позицию прокрутки
-      saveScrollPosition();
-      
       // ВАЖНО: сохраняем локальную копию значения кубиков в переменной компонента
       // НЕ зависящей от автоматической синхронизации
       const diceValues = [...data.dice]; 
@@ -257,9 +184,6 @@ export default function Game() {
       setGame(data.game);
       setNotification(`Выпало ${diceValues[0]} и ${diceValues[1]}!`);
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
       
       // Принудительно блокируем обновление diceRoll
       // таймаут для предотвращения слишком быстрого обновления
@@ -272,8 +196,6 @@ export default function Game() {
         if (!diceRoll || diceRoll[0] === 0) {
           console.log("Перезаписываем значение кубиков:", diceValues);
           setDiceRoll(diceValues);
-          // Повторно восстанавливаем прокрутку
-          window.scrollTo(0, scrollPositionRef.current);
         }
       }, 1500);
  
@@ -282,15 +204,12 @@ export default function Game() {
       console.error("Критическая ошибка:", err);
       setDiceRoll(null); 
       handleApiError(err, "Ошибка броска кубиков");
-      isUpdatingRef.current = false;
     }
   };
 
+  // Остальной код функций оставляем без изменений...
   const buyProperty = async () => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/buy-property`,
@@ -309,12 +228,8 @@ export default function Game() {
 
       const data = await response.json();
       setGame(data);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка покупки собственности");
-      isUpdatingRef.current = false;
     }
   };
 
@@ -328,9 +243,6 @@ export default function Game() {
       });
       
       setNotification("Завершаем ход...");
-      
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
       
       const token = localStorage.getItem("token");
       console.log("Отправка запроса к серверу");
@@ -361,9 +273,6 @@ export default function Game() {
       console.log("Успешный ответ сервера, обновляем игру");
       setGame(data);
 
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
-
       setTimeout(() => {
         console.log("Принудительное обновление через 500мс");
         fetchGameData();
@@ -375,7 +284,6 @@ export default function Game() {
     } catch (err) {
       console.error("Ошибка:", err);
       handleApiError(err, err.message || "Ошибка завершения хода");
-      isUpdatingRef.current = false;
     }
   };
 
@@ -386,9 +294,6 @@ export default function Game() {
         setTimeout(() => setNotification(""), 3000);
         return;
       }
-      
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
       
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -410,20 +315,13 @@ export default function Game() {
       setGame(data);
       setNotification("Игра успешно начата!");
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка запуска игры");
-      isUpdatingRef.current = false;
     }
   };
 
   const joinGame = async () => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/join`,
@@ -443,12 +341,8 @@ export default function Game() {
       await fetchGameData();
       setNotification("Вы успешно присоединились к игре!");
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка присоединения к игре");
-      isUpdatingRef.current = false;
     }
   };
 
@@ -503,9 +397,6 @@ export default function Game() {
 
   const buildHouse = async (propertyId) => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/build`,
@@ -528,20 +419,13 @@ export default function Game() {
       setGame(data);
       setNotification("Дом успешно построен");
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка при строительстве дома");
-      isUpdatingRef.current = false;
     }
   };
 
   const mortgageProperty = async (propertyId) => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       console.log(`Отправка запроса на залог собственности: ${propertyId}, gameId: ${id}`);
       
@@ -574,21 +458,14 @@ export default function Game() {
       setGame(data);
       setNotification("Собственность успешно заложена");
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       console.error("Ошибка в mortgageProperty:", err);
       handleApiError(err, err.message || "Ошибка при залоге собственности");
-      isUpdatingRef.current = false;
     }
   };
 
   const unmortgageProperty = async (propertyId) => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/unmortgage`,
@@ -616,12 +493,8 @@ export default function Game() {
       setGame(data);
       setNotification("Собственность успешно выкуплена");
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка при выкупе собственности");
-      isUpdatingRef.current = false;
     }
   };
 
@@ -670,9 +543,6 @@ export default function Game() {
 
   const proposeTrade = async (tradeData) => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/trade`,
@@ -704,20 +574,13 @@ export default function Game() {
       }
       
       setTimeout(() => setNotification(""), 5000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка отправки предложения обмена");
-      isUpdatingRef.current = false;
     }
   };
 
   const acceptTrade = async (tradeId) => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/trade/${tradeId}/accept`,
@@ -739,20 +602,13 @@ export default function Game() {
       setGame(data);
       setNotification("Предложение обмена принято");
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка принятия предложения обмена");
-      isUpdatingRef.current = false;
     }
   };
 
   const rejectTrade = async (tradeId) => {
     try {
-      // Сохраняем позицию прокрутки
-      saveScrollPosition();
-      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/trade/${tradeId}/reject`,
@@ -774,12 +630,8 @@ export default function Game() {
       setGame(data);
       setNotification("Предложение обмена отклонено");
       setTimeout(() => setNotification(""), 3000);
-      
-      // Восстанавливаем позицию прокрутки
-      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка отклонения предложения обмена");
-      isUpdatingRef.current = false;
     }
   };
 
@@ -826,30 +678,52 @@ export default function Game() {
   }
 
   return (
-    <div className="game-container" ref={gameContainerRef}>
-      <h2>{game.name}</h2>
-      {notification && (
-        <div className="notification">
-          {notification}
-        </div>
-      )}
+    <div className="game-container" style={{
+      height: '100vh', 
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      padding: '5px',
+      boxSizing: 'border-box'
+    }}>
+      <div style={{ 
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '2px'
+      }}>
+        <h2 style={{ margin: '0', fontSize: '16px' }}>{game.name}</h2>
+        {notification && (
+          <div className="notification" style={{
+            padding: '2px 8px',
+            backgroundColor: '#e6f7ff',
+            borderRadius: '4px',
+            fontSize: '12px'
+          }}>
+            {notification}
+          </div>
+        )}
+      </div>
       
+      {/* Компактная верхняя панель с информацией о игроках */}
       <div className="game-players-info" style={{
         backgroundColor: '#fafafa',
         border: '1px solid #ddd',
-        borderRadius: '6px',
-        padding: '10px',
-        marginBottom: '20px'
+        borderRadius: '4px',
+        padding: '4px',
+        marginBottom: '4px',
+        maxHeight: '85px',
+        overflowY: 'auto'
       }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '12px',
-          fontSize: '14px'
+          marginBottom: '2px',
+          fontSize: '11px'
         }}>
           <div>
-            <strong>Статус:</strong> {game.status === "waiting" ? "⏳ Ожидание игроков" : "▶️ Игра активна"}
+            <strong>Статус:</strong> {game.status === "waiting" ? "⏳ Ожидание" : "▶️ Активна"}
           </div>
           <div>
             <strong>Игроков:</strong> {game.players.length}/{game.maxPlayers} 
@@ -860,65 +734,84 @@ export default function Game() {
         <div style={{
           display: 'flex',
           flexWrap: 'wrap',
-          gap: '10px',
+          gap: '4px',
           justifyContent: 'center'
         }}>
           {game.players.map((player, index) => (
             <div key={player.user?._id || player.botId} style={{
               backgroundColor: game.currentPlayerIndex === index ? '#eef6ff' : '#fff',
               border: '1px solid #ccc',
-              borderRadius: '4px',
-              padding: '8px 10px',
-              width: '180px',
-              fontSize: '13px',
+              borderRadius: '3px',
+              padding: '3px 5px',
+              width: '120px',
+              fontSize: '11px',
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: '4px'
+              alignItems: 'flex-start'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
                 <div style={{
-                  width: '12px',
-                  height: '12px',
+                  width: '8px',
+                  height: '8px',
                   borderRadius: '50%',
                   backgroundColor: player.color,
                   border: '1px solid #aaa'
                 }}></div>
-                <strong>{player.isBot ? `🤖 ${player.botName}` : `👤 ${player.user.username}`}</strong>
+                <strong style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '65px'}}>
+                  {player.isBot ? `${player.botName}` : `${player.user.username}`}
+                </strong>
+                {game.currentPlayerIndex === index && (
+                  <span style={{
+                    marginLeft: 'auto',
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    padding: '0px 3px',
+                    borderRadius: '8px',
+                    fontSize: '8px',
+                  }}>
+                    Ходит
+                  </span>
+                )}
               </div>
               
-              <div>💰 {player.money} $</div>
-              <div>🏠 {player.properties?.length || 0} собственности</div>
-
-              {game.currentPlayerIndex === index && (
-                <div style={{
-                  marginTop: '4px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  padding: '2px 6px',
-                  borderRadius: '12px',
-                  fontSize: '11px',
-                  alignSelf: 'center'
-                }}>
-                  Сейчас ходит
-                </div>
-              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '10px' }}>
+                <span>💰 {player.money}</span>
+                <span>🏠 {player.properties?.length || 0}</span>
+              </div>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Компактный блок для режима ожидания */}
       {game.status === "waiting" && (
-        <div className="waiting-room">
+        <div className="waiting-room" style={{
+          padding: '4px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '4px',
+          marginBottom: '4px',
+          textAlign: 'center'
+        }}>
           {!isPlayer && !isFull ? (
             <div>
-              <p>Вы еще не присоединились к этой игре.</p>
-              <button onClick={joinGame}>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px' }}>Вы еще не присоединились к этой игре.</p>
+              <button 
+                onClick={joinGame}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
                 Присоединиться к игре
               </button>
             </div>
           ) : isFull && !isPlayer ? (
-            <p>Игра заполнена. Вы не можете присоединиться.</p>
+            <p style={{ margin: '0', fontSize: '12px' }}>Игра заполнена. Вы не можете присоединиться.</p>
           ) : null}
           
           {isCreator ? (
@@ -926,17 +819,40 @@ export default function Game() {
               <button 
                 onClick={startGame}
                 disabled={!canStartGame()}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: canStartGame() ? '#4CAF50' : '#cccccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: canStartGame() ? 'pointer' : 'not-allowed',
+                  fontSize: '12px'
+                }}
               >
                 НАЧАТЬ ИГРУ
               </button>
               {!canStartGame() && (
-                <p className="hint">Нужно минимум 2 участника (игроки + боты) для начала игры</p>
+                <p className="hint" style={{ margin: '3px 0 0 0', fontSize: '10px', color: '#666' }}>
+                  Нужно минимум 2 участника для начала игры
+                </p>
               )}
             </div>
           ) : isPlayer ? (
             <div>
-              <p>Ожидание, пока создатель игры начнет игру...</p>
-              <button onClick={leaveGame} className="leave-button">
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px' }}>Ожидание начала игры...</p>
+              <button 
+                onClick={leaveGame} 
+                className="leave-button"
+                style={{
+                  padding: '3px 8px',
+                  backgroundColor: '#f44336',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  fontSize: '11px'
+                }}
+              >
                 Покинуть игру
               </button>
             </div>
@@ -944,18 +860,35 @@ export default function Game() {
         </div>
       )}
 
-      {/* Отображение предложений обмена, если они есть */}
+      {/* Более компактное отображение предложений обмена */}
       {isPlayer && (
-        <TradeOffers 
-          game={game}
-          currentPlayer={currentPlayer}
-          onAcceptTrade={acceptTrade}
-          onRejectTrade={rejectTrade}
-        />
+        <div style={{ maxHeight: '70px', overflowY: 'auto', marginBottom: '4px' }}>
+          <TradeOffers 
+            game={game}
+            currentPlayer={currentPlayer}
+            onAcceptTrade={acceptTrade}
+            onRejectTrade={rejectTrade}
+          />
+        </div>
       )}
 
-      <div className="game-layout">
-        <div className="player-info-sidebar">
+      {/* Основной контейнер с игровой доской и информацией */}
+      <div style={{ 
+        display: 'flex', 
+        flex: 1,
+        overflow: 'hidden',
+        minHeight: 0 // Важно для корректной работы flex в Firefox
+      }}>
+        {/* Уменьшенная боковая панель с информацией о игроках */}
+        <div style={{ 
+          width: '160px',
+          overflowY: 'auto',
+          padding: '3px',
+          marginRight: '4px',
+          backgroundColor: '#f8f8f8',
+          borderRadius: '4px',
+          fontSize: '14px'
+        }}>
           {game.players.map((player, index) => (
             <PlayerInfo
               key={player.user?._id || player.botId || `bot-${index}`}
@@ -970,17 +903,31 @@ export default function Game() {
           ))}
         </div>
 
-        <div className="main-board">
-          <GameBoard
-            game={game}
-            currentPlayer={currentPlayer}
-            diceRoll={diceRoll}
-            onPropertyClick={handlePropertyClick}
-            gameId={id}
-          />
+        {/* Уменьшенная основная часть с игровой доской */}
+        <div style={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minWidth: 0 // Важно для корректной работы flex в Firefox
+        }}>
+          <div style={{ 
+            flex: 1,
+            overflow: 'auto',
+            marginBottom: '4px',
+            minHeight: 0 // Важно для корректной работы flex в Firefox
+          }}>
+            <GameBoard
+              game={game}
+              currentPlayer={currentPlayer}
+              diceRoll={diceRoll}
+              onPropertyClick={handlePropertyClick}
+              gameId={id}
+            />
+          </div>
 
           {game.status === "active" && (
-            <div>
+            <div style={{ padding: '2px 0' }}>
               <GameActions
                 canRollDice={canRollDice}
                 canBuyProperty={canBuyProperty}
@@ -996,7 +943,7 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Модальное окно для предложения обмена */}
+      {/* Модальные окна - они не влияют на прокрутку */}
       {isPlayer && (
         <TradeModal
           isOpen={isTradeModalOpen}
@@ -1007,7 +954,6 @@ export default function Game() {
         />
       )}
 
-      {/* Модальное окно управления собственностью */}
       <PropertyManagementModal
         isOpen={isPropertyModalOpen}
         onClose={closePropertyModal}

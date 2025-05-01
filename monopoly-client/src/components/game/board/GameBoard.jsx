@@ -349,7 +349,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
               textAlign: "center",
             }}
           >
-            Игровой чат 
+            Игровой чат {currentGameId ? `(ID: ${currentGameId})` : '(ID не определен)'}
           </div>
           <div
             ref={chatContainerRef}

@@ -9,6 +9,7 @@ import Lobby from "./pages/Lobby";
 import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminPage from "./pages/AdminPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 export default function App() {
   return (
@@ -41,20 +42,18 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      {/* <Route
-        path="/game"
-        element={
-          <ProtectedRoute>
-            <GameBoard />
-          </ProtectedRoute>
-        }
-      /> */}
       <Route
         path="/game/:id"
         element={
           <ProtectedRoute>
             <Game />
           </ProtectedRoute>
+        }
+      />
+       <Route
+        path="*"
+        element={
+          <NotFoundPage />
         }
       />
     </Routes>
