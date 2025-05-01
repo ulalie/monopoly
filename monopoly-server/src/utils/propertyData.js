@@ -1,33 +1,3 @@
-// import id_1 from '../../../client/src/assets/pic/id_1.png';
-// import id_3 from '../../../client/src/assets/pic/id_3.png';
-// import id_5 from '../../../client/src/assets/pic/id_5.png';
-// import id_6 from '../../../client/src/assets/pic/id_6.png';
-// import id_8 from '../../../client/src/assets/pic/id_8.png';
-// import id_9 from '../../../client/src/assets/pic/id_9.png';
-// import id_11 from '../../../client/src/assets/pic/id_11.png';
-// import id_12 from '../../../client/src/assets/pic/id_12.png';
-// import id_13 from '../../../client/src/assets/pic/id_13.png';
-// import id_14 from '../../../client/src/assets/pic/id_14.png';
-// import id_15_25_35 from '../../../client/src/assets/pic/id_15_25_35.png';
-// import id_16 from '../../../client/src/assets/pic/id_16.png';
-// import id_18 from '../../../client/src/assets/pic/id_18.png';
-// import id_19 from '../../../client/src/assets/pic/id_19.png';
-// import id_21 from '../../../client/src/assets/pic/id_21.png';
-// import id_23 from '../../../client/src/assets/pic/id_23.png';
-// import id_24 from '../../../client/src/assets/pic/id_24.png';
-// import id_26 from '../../../client/src/assets/pic/id_26.png';
-// import id_27 from '../../../client/src/assets/pic/id_27.png';
-// import id_28 from '../../../client/src/assets/pic/id_28.png';
-// import id_29 from '../../../client/src/assets/pic/id_29.png';
-// import id_31 from '../../../client/src/assets/pic/id_31.png';
-// import id_32 from '../../../client/src/assets/pic/id_32.png';
-// import id_34 from '../../../client/src/assets/pic/id_34.png';
-// import id_37 from '../../../client/src/assets/pic/id_37.png';
-// import id_39 from '../../../client/src/assets/pic/id_39.png';
-
-
-
-
 function initializeMonopolyProperties() {
   return [
     //------------------ Первый круг (нижняя строка) ------------------
@@ -44,7 +14,7 @@ function initializeMonopolyProperties() {
       description: "Зыбицкая улица — одна из самых известных и оживленных улиц Минска, находящаяся в центре города. Здесь расположены многочисленные кафе, бары, магазины и исторические здания, привлекающие как местных жителей, так и туристов. Это место, где сочетаются старинная архитектура и современная атмосфера.",
       pic: "/pic/id_1.png"
     },
-    { id: 2, name: "Общественная казна", type: "community" },
+    { id: 2, name: "Общественная казна", type: "community", pic: "/pic/doll.png" },
     {
       id: 3,
       name: "Троицкое предместье",
@@ -57,7 +27,7 @@ function initializeMonopolyProperties() {
       description: "Троицкое предместье — исторический район Минска с характерной для XVIII-XIX веков архитектурой. Здесь сохранились старинные здания, узкие улицы и уютные площади, создающие атмосферу старого города. Это место является популярным для прогулок и культурных мероприятий.",
       pic: "/pic/id_3.png"
     },
-    { id: 4, name: "Налог на роскошь", type: "tax", amount: 200 },
+    { id: 4, name: "Налог на роскошь", type: "tax", amount: 200, pic: "/pic/doll.png" },
     {
       id: 5,
       name: "Минский ЖД вокзал",
@@ -80,7 +50,7 @@ function initializeMonopolyProperties() {
       description: "Улица Немига — одна из самых старых улиц Минска, расположенная в центре города. Здесь проходят важные транспортные артерии, а также находятся многочисленные магазины, кафе и жилые дома. Вдоль улицы можно найти памятники архитектуры и исторические здания.",
       pic: "/pic/id_6.png"
     },
-    { id: 7, name: "Шанс", type: "chance" },
+    { id: 7, name: "Шанс", type: "chance", pic: "/pic/chance.png" },
     {
       id: 8,
       name: "Площадь Свободы",
@@ -175,7 +145,7 @@ function initializeMonopolyProperties() {
       description:"Улица Карла Маркса — одна из центральных улиц Минска, являющаяся важной транспортной артерией. Здесь расположены многочисленные магазины, офисы и культурные учреждения. Улица соединяет важные районы города и является частью исторического центра.",
       pic: "/pic/id_16.png"
     },
-    { id: 17, name: "Общественная казна", type: "community" },
+    { id: 17, name: "Общественная казна", type: "community", pic: "/pic/doll.png" },
     {
       id: 18,
       name: "Площадь Якуба Коласа",
@@ -200,9 +170,9 @@ function initializeMonopolyProperties() {
       description:"Лошицкий парк — зеленая зона в Минске, которая является популярным местом для отдыха на природе. Парк славится своей богатой растительностью и уютными прудиками. Это отличное место для пеших прогулок, занятий спортом и пикников.",
       pic: "/pic/id_19.png"
     },
+
     { id: 20, name: "Бесплатная парковка (Парк Челюскинцев)", type: "special" },
 
-    //------------------ Верхняя строка ------------------
     {
       id: 21,
       name: "Музей ВОВ",
@@ -215,7 +185,7 @@ function initializeMonopolyProperties() {
       description:"Музей Великой Отечественной войны в Минске — важное культурное учреждение, которое хранит память о событиях Второй мировой войны. В музее представлены уникальные экспонаты, фотографии и документы, связанные с историей войны. Это место привлекает как местных жителей, так и туристов.",
       pic: "/pic/id_21.png"
     },
-    { id: 22, name: "Шанс", type: "chance" },
+    { id: 22, name: "Шанс", type: "chance", pic: "/pic/chance.png" },
     {
       id: 23,
       name: "Минск-Арена",
@@ -322,7 +292,7 @@ function initializeMonopolyProperties() {
       description:"Пищаловский замок — историческое сооружение в Минске, которое является примером дворцовой архитектуры XVI века. Замок с богатой историей был восстановлен и теперь является частью культурного наследия города. Это популярное место для экскурсий и культурных мероприятий.",
       pic: "/pic/id_32.png"
     },
-    { id: 33, name: "Общественная казна", type: "community" },
+    { id: 33, name: "Общественная казна", type: "community", pic: "/pic/doll.png" },
     {
       id: 34,
       name: "Дворец Республики",
@@ -345,7 +315,7 @@ function initializeMonopolyProperties() {
       description:"Станция метро Каменная Горка — одна из станций Минского метрополитена, расположенная в юго-западной части города. Она соединяет несколько районов и является важным транспортным узлом. Станция обслуживает множество жилых комплексов и коммерческих объектов.",
       pic: "/pic/id_15_25_35.png"
     },
-    { id: 36, name: "Шанс", type: "chance" },
+    { id: 36, name: "Шанс", type: "chance", pic: "/pic/chance.png" },
     {
       id: 37,
       name: "Бизнес-центр «Парус»",
@@ -358,7 +328,7 @@ function initializeMonopolyProperties() {
       description:"Бизнес-центр Парус — современный офисный комплекс в Минске, известный своей архитектурой и удобным расположением. Он предоставляет офисные и коммерческие площади для различных компаний. Бизнес-центр также включает в себя рестораны, кафе и другие удобства для арендаторов и посетителей.",
       pic: "/pic/id_37.png"
     },
-    { id: 38, name: "Экологический налог", type: "tax", amount: 100 },
+    { id: 38, name: "Экологический налог", type: "tax", amount: 100, pic: "/pic/doll.png" },
     {
       id: 39,
       name: "Национальный банк РБ",

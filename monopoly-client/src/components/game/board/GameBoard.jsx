@@ -289,7 +289,12 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
   };
 
   if (!game || !game.properties || game.properties.length === 0) {
-    return <div>Загрузка игровой доски...</div>;
+    return <div className="container mx-auto text-neutral-600 p-8 min-h-screen flex items-center justify-center">
+    <div className="text-center">
+      <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-400 mb-4"></div>
+      <p className="text-xl">Загрузка игровой доски...</p>
+    </div>
+  </div>;
   }
 
   // Убедитесь, что у вас есть идентификатор игры
@@ -349,7 +354,9 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
               textAlign: "center",
             }}
           >
-            Игровой чат {currentGameId ? `(ID: ${currentGameId})` : '(ID не определен)'}
+
+            Игровой чат 
+      
           </div>
           <div
             ref={chatContainerRef}
@@ -556,25 +563,23 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
               />
             )}
 
-            {/* Название полей */}
-            {![
-              1, 3, 5, 6, 8, 9, 11, 12, 13, 14, 15, 16, 18, 19, 21, 23, 24, 25,
-              26, 27, 28, 29, 31, 32, 34, 35, 37, 39,
-            ].includes(property.id) && (
-              <div
-                className="property-name"
-                style={{
-                  fontSize: "8px",
-                  fontWeight: "bold",
-                  textAlign: "center",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {property.name || `Поле ${index}`}
-              </div>
-            )}
+
+{[0, 10, 20, 30].includes(property.id) && (
+  <div
+    className="property-name"
+    style={{
+      fontSize: '8px',
+      fontWeight: 'bold',
+      textAlign: 'center',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
+    }}
+  >
+    {property.name || `Поле ${index}`}
+  </div>
+)}
+
 
             {/* Цена */}
             {property.price && (
@@ -627,70 +632,72 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
               </div>
             )}
 
-            {/* Картинка */}
-            {[
-              1, 3, 5, 6, 8, 9, 11, 12, 13, 14, 15, 16, 18, 19, 21, 23, 24, 25,
-              26, 27, 28, 29, 31, 32, 34, 35, 37, 39,
-            ].includes(property.id) && (
-              <div
-                style={{
-                  position: "absolute",
-                  zIndex: 5,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  ...(index <= 10
-                    ? {
-                        bottom: "20%",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        height: "60px",
-                        width: "60px",
-                      }
-                    : index <= 20
-                    ? {
-                        right: "0",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        height: "60px",
-                        width: "60px",
-                      }
-                    : index <= 30
-                    ? {
-                        bottom: "0",
-                        left: "50%",
-                        transform: "translateX(-50%)",
-                        height: "60px",
-                        width: "60px",
-                      }
-                    : {
-                        left: "0",
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        height: "60px",
-                        width: "60px",
-                      }),
-                }}
-              >
-                <img
-                  src={
-                    property.id === 15 ||
-                    property.id === 25 ||
-                    property.id === 35
-                      ? "/pic/id_15_25_35.png"
-                      : `/pic/id_${property.id}.png`
-                  }
-                  alt="Property"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
-            )}
 
-            {/* Индикатор залога */}
+{[1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39].includes(property.id) && (
+  <div
+    style={{
+      position: 'absolute',
+      zIndex: 5,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      ...(index <= 10
+        ? { // Верхний ряд — фото внизу
+            bottom: '20%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            height: '60px',
+            width: '60px'
+          }
+        : index <= 20
+        ? { // Левая колонка — фото справа
+            right: '0',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            height: '60px',
+            width: '60px'
+          }
+        : index <= 30
+        ? { // Нижний ряд — фото сверху
+            bottom: '0',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            height: '60px',
+            width: '60px'
+          }
+        : { // Правая колонка — фото слева
+            left: '0',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            height: '60px',
+            width: '60px'
+          }
+      )
+    }}
+  >
+    <img
+      src={
+        (property.id === 15 || property.id === 25 || property.id === 35)
+          ? '/pic/id_15_25_35.png'
+          : [2, 4, 17, 33, 38].includes(property.id)
+            ? '/pic/doll.png'
+            : [7, 22, 36].includes(property.id)
+              ? '/pic/chance.png'
+              : `/pic/id_${property.id}.png`
+      }
+      alt="Property"
+      style={{
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover' // квадратная картинка
+      }}
+    />
+  </div>
+)}
+
+            {/* Индикатор заложенной собственности */}
+
+
             {property.mortgaged && (
               <div
                 style={{
@@ -761,44 +768,50 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
 
       {/* Кубики */}
       {diceRoll && (
-        <div
-          className="dice-display"
-          style={{
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%, -50%)",
-            display: "flex",
-            gap: "10px",
-            zIndex: 20,
-            backgroundColor: "rgba(255,255,255,0.9)",
-            padding: "15px",
-            borderRadius: "10px",
-            boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-          }}
-        >
-          {diceRoll.map((value, index) => (
-            <div
-              key={index}
-              className="die"
-              style={{
-                width: "40px",
-                height: "40px",
-                backgroundColor: "white",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                fontSize: "24px",
-                fontWeight: "bold",
-              }}
-            >
-              {value}
-            </div>
-          ))}
-        </div>
-      )}
+
+  <div
+    className="dice-display"
+    style={{
+      position: "absolute",
+      left: "50%",
+      top: "50%",
+      transform: "translate(-50%, -50%)",
+      display: "flex",
+      gap: "15px",
+      zIndex: 20,
+      backgroundColor: "rgba(255,255,255,0.95)",
+      padding: "20px",
+      borderRadius: "12px",
+      boxShadow: "0 8px 20px rgba(0,0,0,0.25)",
+    }}
+  >
+    {diceRoll.map((value, index) => (
+      <div
+        key={index}
+        className="die animate-roll"
+        style={{
+          width: "50px",
+          height: "50px",
+          background: "linear-gradient(145deg, #ffffff, #e6e6e6)",
+          borderRadius: "10px",
+          border: "2px solid #ccc",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontSize: "28px",
+          fontWeight: "bold",
+          color: "#333",
+          boxShadow: "inset -2px -2px 5px #ffffff, inset 2px 2px 5px #d1d1d1",
+        }}
+      >
+        {value}
+      </div>
+    ))}
+  </div>
+)}
+
+
     </div>
   );
 }
+/////надо сделать кнопки того же цвета что и на главных страницах

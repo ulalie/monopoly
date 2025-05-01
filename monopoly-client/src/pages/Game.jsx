@@ -656,7 +656,12 @@ export default function Game() {
 
   const { canRollDice, canBuyProperty, canEndTurn } = getActionState();
 
-  if (loading) return <div className="loading">Загрузка игры...</div>;
+  if (loading) return <div className="container mx-auto text-neutral-600 p-8 min-h-screen flex items-center justify-center">
+  <div className="text-center">
+    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-400 mb-4"></div>
+    <p className="text-xl">Загрузка игры...</p>
+  </div>
+</div>;
   if (error) return <div className="error">Ошибка: {error}</div>;
   if (!game) return <div className="error">Игра не найдена</div>;
 
@@ -705,7 +710,8 @@ export default function Game() {
         )}
       </div>
       
-      {/* Компактная верхняя панель с информацией о игроках */}
+      {/* Компактная верхняя панель с информацией о игроках
+
       <div className="game-players-info" style={{
         backgroundColor: '#fafafa',
         border: '1px solid #ddd',
@@ -781,7 +787,9 @@ export default function Game() {
             </div>
           ))}
         </div>
-      </div>
+
+      </div> */}
+
 
       {/* Компактный блок для режима ожидания */}
       {game.status === "waiting" && (
