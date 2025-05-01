@@ -354,8 +354,9 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
               textAlign: "center",
             }}
           >
+
             Игровой чат 
-            {/*{currentGameId ? `(ID: ${currentGameId})` : '(ID не определен)'}*/}
+      
           </div>
           <div
             ref={chatContainerRef}
@@ -562,6 +563,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
               />
             )}
 
+
 {[0, 10, 20, 30].includes(property.id) && (
   <div
     className="property-name"
@@ -577,6 +579,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
     {property.name || `Поле ${index}`}
   </div>
 )}
+
 
             {/* Цена */}
             {property.price && (
@@ -693,6 +696,8 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
 )}
 
             {/* Индикатор заложенной собственности */}
+
+
             {property.mortgaged && (
               <div
                 style={{
@@ -763,6 +768,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
 
       {/* Кубики */}
       {diceRoll && (
+
   <div
     className="dice-display"
     style={{
@@ -803,6 +809,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
     ))}
   </div>
 )}
+
 
     </div>
   );

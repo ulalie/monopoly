@@ -711,6 +711,7 @@ export default function Game() {
       </div>
       
       {/* Компактная верхняя панель с информацией о игроках
+
       <div className="game-players-info" style={{
         backgroundColor: '#fafafa',
         border: '1px solid #ddd',
@@ -786,7 +787,9 @@ export default function Game() {
             </div>
           ))}
         </div>
+
       </div> */}
+
 
       {/* Компактный блок для режима ожидания */}
       {game.status === "waiting" && (
