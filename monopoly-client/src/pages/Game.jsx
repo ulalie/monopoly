@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GameBoard from "../components/game/board/GameBoard";
 import PlayerInfo from "../components/game/player/PlayerInfo";
@@ -21,6 +21,11 @@ export default function Game() {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
   const [updateIntervalId, setUpdateIntervalId] = useState(null);
+  
+  // Хранение позиции прокрутки
+  const scrollPositionRef = useRef(0);
+  const isUpdatingRef = useRef(false);
+  const gameContainerRef = useRef(null);
 
   const handleApiError = (error, message) => {
     console.error(message, error);
@@ -28,6 +33,45 @@ export default function Game() {
     setNotification(`Ошибка: ${message}`);
     setTimeout(() => setNotification(""), 5000);
   };
+
+  // Для сохранения позиции скролла перед обновлением данных
+  const saveScrollPosition = () => {
+    scrollPositionRef.current = window.scrollY;
+  };
+
+  // Для восстановления позиции скролла после обновления данных
+  const restoreScrollPosition = () => {
+    // Устанавливаем небольшую задержку, чтобы DOM успел обновиться
+    setTimeout(() => {
+      window.scrollTo(0, scrollPositionRef.current);
+      isUpdatingRef.current = false;
+    }, 50);
+  };
+
+  // Добавляем обработчик прокрутки, чтобы обнаружить ручную прокрутку пользователем
+  useEffect(() => {
+    let scrollTimeout;
+    
+    const handleScroll = () => {
+      // Если это не программная прокрутка во время обновления,
+      // запоминаем новую позицию как пользовательскую
+      if (!isUpdatingRef.current) {
+        scrollPositionRef.current = window.scrollY;
+      }
+      
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        // После завершения прокрутки, позволим обновлению данных
+      }, 200);
+    };
+    
+    window.addEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, []);
 
   useEffect(() => {
     fetchGameData();
@@ -66,11 +110,21 @@ export default function Game() {
 
   const fetchGameData = async () => {
     try {
+      // Если мы находимся в процессе обновления, пропускаем этот цикл
+      if (isUpdatingRef.current) {
+        console.log("Пропуск обновления, предыдущее обновление еще не завершено");
+        return;
+      }
+      
       // Проверяем состояние всех модальных окон
       if (isTradeModalOpen || isPropertyModalOpen) {
         console.log(`Пропуск обновления данных, т.к. открыто модальное окно (trade: ${isTradeModalOpen}, property: ${isPropertyModalOpen})`);
         return;
       }
+      
+      // Сохраняем текущую позицию прокрутки
+      saveScrollPosition();
+      isUpdatingRef.current = true;
       
       const token = localStorage.getItem("token");
       if (!token) {
@@ -90,7 +144,20 @@ export default function Game() {
 
       const gameData = await response.json();
       
-      setGame(gameData);
+      // Обновляем состояния в правильном порядке
+      setGame(prevGame => {
+        // Если игра существенно не изменилась, не обновляем состояние
+        if (prevGame && 
+            JSON.stringify(prevGame.players.map(p => p.position)) === 
+            JSON.stringify(gameData.players.map(p => p.position)) &&
+            prevGame.currentPlayerIndex === gameData.currentPlayerIndex &&
+            prevGame.lastDiceRoll === gameData.lastDiceRoll) {
+          console.log("Пропуск обновления - игра не изменилась существенно");
+          isUpdatingRef.current = false;
+          return prevGame;
+        }
+        return gameData;
+      });
 
       const tokenParts = token.split(".");
       const payload = JSON.parse(atob(tokenParts[1]));
@@ -117,11 +184,14 @@ export default function Game() {
       });
 
       setDiceRoll(gameData.lastDiceRoll ? gameData.lastDiceRoll.dice : null);
-
       setLoading(false);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка загрузки данных игры");
       setLoading(false);
+      isUpdatingRef.current = false;
     }
   };
 
@@ -176,6 +246,9 @@ export default function Game() {
         gameLastDiceRoll: data.game?.lastDiceRoll
       });
       
+      // Сохраняем текущую позицию прокрутки
+      saveScrollPosition();
+      
       // ВАЖНО: сохраняем локальную копию значения кубиков в переменной компонента
       // НЕ зависящей от автоматической синхронизации
       const diceValues = [...data.dice]; 
@@ -184,6 +257,9 @@ export default function Game() {
       setGame(data.game);
       setNotification(`Выпало ${diceValues[0]} и ${diceValues[1]}!`);
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
       
       // Принудительно блокируем обновление diceRoll
       // таймаут для предотвращения слишком быстрого обновления
@@ -196,6 +272,8 @@ export default function Game() {
         if (!diceRoll || diceRoll[0] === 0) {
           console.log("Перезаписываем значение кубиков:", diceValues);
           setDiceRoll(diceValues);
+          // Повторно восстанавливаем прокрутку
+          window.scrollTo(0, scrollPositionRef.current);
         }
       }, 1500);
  
@@ -204,11 +282,15 @@ export default function Game() {
       console.error("Критическая ошибка:", err);
       setDiceRoll(null); 
       handleApiError(err, "Ошибка броска кубиков");
+      isUpdatingRef.current = false;
     }
   };
 
   const buyProperty = async () => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/buy-property`,
@@ -227,8 +309,12 @@ export default function Game() {
 
       const data = await response.json();
       setGame(data);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка покупки собственности");
+      isUpdatingRef.current = false;
     }
   };
 
@@ -242,6 +328,9 @@ export default function Game() {
       });
       
       setNotification("Завершаем ход...");
+      
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
       
       const token = localStorage.getItem("token");
       console.log("Отправка запроса к серверу");
@@ -272,6 +361,9 @@ export default function Game() {
       console.log("Успешный ответ сервера, обновляем игру");
       setGame(data);
 
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
+
       setTimeout(() => {
         console.log("Принудительное обновление через 500мс");
         fetchGameData();
@@ -283,6 +375,7 @@ export default function Game() {
     } catch (err) {
       console.error("Ошибка:", err);
       handleApiError(err, err.message || "Ошибка завершения хода");
+      isUpdatingRef.current = false;
     }
   };
 
@@ -293,6 +386,9 @@ export default function Game() {
         setTimeout(() => setNotification(""), 3000);
         return;
       }
+      
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
       
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -314,13 +410,20 @@ export default function Game() {
       setGame(data);
       setNotification("Игра успешно начата!");
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка запуска игры");
+      isUpdatingRef.current = false;
     }
   };
 
   const joinGame = async () => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/join`,
@@ -340,8 +443,12 @@ export default function Game() {
       await fetchGameData();
       setNotification("Вы успешно присоединились к игре!");
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, "Ошибка присоединения к игре");
+      isUpdatingRef.current = false;
     }
   };
 
@@ -396,6 +503,9 @@ export default function Game() {
 
   const buildHouse = async (propertyId) => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/build`,
@@ -418,13 +528,20 @@ export default function Game() {
       setGame(data);
       setNotification("Дом успешно построен");
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка при строительстве дома");
+      isUpdatingRef.current = false;
     }
   };
 
   const mortgageProperty = async (propertyId) => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       console.log(`Отправка запроса на залог собственности: ${propertyId}, gameId: ${id}`);
       
@@ -457,14 +574,21 @@ export default function Game() {
       setGame(data);
       setNotification("Собственность успешно заложена");
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       console.error("Ошибка в mortgageProperty:", err);
       handleApiError(err, err.message || "Ошибка при залоге собственности");
+      isUpdatingRef.current = false;
     }
   };
 
   const unmortgageProperty = async (propertyId) => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/unmortgage`,
@@ -492,8 +616,12 @@ export default function Game() {
       setGame(data);
       setNotification("Собственность успешно выкуплена");
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка при выкупе собственности");
+      isUpdatingRef.current = false;
     }
   };
 
@@ -542,6 +670,9 @@ export default function Game() {
 
   const proposeTrade = async (tradeData) => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/trade`,
@@ -573,13 +704,20 @@ export default function Game() {
       }
       
       setTimeout(() => setNotification(""), 5000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка отправки предложения обмена");
+      isUpdatingRef.current = false;
     }
   };
 
   const acceptTrade = async (tradeId) => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/trade/${tradeId}/accept`,
@@ -601,13 +739,20 @@ export default function Game() {
       setGame(data);
       setNotification("Предложение обмена принято");
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка принятия предложения обмена");
+      isUpdatingRef.current = false;
     }
   };
 
   const rejectTrade = async (tradeId) => {
     try {
+      // Сохраняем позицию прокрутки
+      saveScrollPosition();
+      
       const token = localStorage.getItem("token");
       const response = await fetch(
         `http://localhost:8080/game/${id}/trade/${tradeId}/reject`,
@@ -629,28 +774,13 @@ export default function Game() {
       setGame(data);
       setNotification("Предложение обмена отклонено");
       setTimeout(() => setNotification(""), 3000);
+      
+      // Восстанавливаем позицию прокрутки
+      restoreScrollPosition();
     } catch (err) {
       handleApiError(err, err.message || "Ошибка отклонения предложения обмена");
+      isUpdatingRef.current = false;
     }
-  };
-
-  const resetModals = () => {
-    console.log("Сброс состояния модальных окон");
-    // Отменяем таймер автоматического закрытия
-    if (window.updateTimeoutId) {
-      clearTimeout(window.updateTimeoutId);
-    }
-    
-    setIsTradeModalOpen(false);
-    setIsPropertyModalOpen(false);
-    
-    // Восстанавливаем автоматическое обновление
-    if (!updateIntervalId) {
-      const newIntervalId = setInterval(fetchGameData, 5000);
-      setUpdateIntervalId(newIntervalId);
-    }
-    
-    setTimeout(fetchGameData, 100);
   };
 
   const getActionState = () => {
@@ -696,152 +826,88 @@ export default function Game() {
   }
 
   return (
-    <div className="game-container">
+    <div className="game-container" ref={gameContainerRef}>
       <h2>{game.name}</h2>
-      
-      <button 
-    onClick={fetchGameData}
-    style={{
-      padding: "8px 16px",
-      backgroundColor: "#4CAF50",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "500",
-      transition: "background-color 0.2s",
-      ":hover": {
-        backgroundColor: "#45a049"
-      }
-    }}
-  >
-    🔄 Обновить
-  </button>
-  
-  <button 
-    onClick={resetModals}
-    style={{
-      padding: "8px 16px",
-      backgroundColor: "#4CAF50",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "500",
-      transition: "background-color 0.2s",
-      ":hover": {
-        backgroundColor: "#45a049"
-      }
-    }}
-  >
-    🔄 Сбросить модалки
-  </button>
-  
-  <button 
-    onClick={() => window.location.reload()}
-    style={{
-      padding: "8px 16px",
-      backgroundColor: "#4CAF50",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "500",
-      transition: "background-color 0.2s",
-      ":hover": {
-        backgroundColor: "#45a049"
-      }
-    }}
-  >
-    🔄 Перезагрузить
-  </button>
-      
       {notification && (
         <div className="notification">
           {notification}
         </div>
       )}
       
-{/*ЗАСУНУТЬ ВСЕ ИЗ playerinfo СЮДА И УБРАТЬ ЭТОТ БЛОК ВООБЩЕ.*/}
-
       <div className="game-players-info" style={{
-  backgroundColor: '#fafafa',
-  border: '1px solid #ddd',
-  borderRadius: '6px',
-  padding: '10px',
-  marginBottom: '20px'
-}}>
-  <div style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '12px',
-    fontSize: '14px'
-  }}>
-    <div>
-      <strong>Статус:</strong> {game.status === "waiting" ? "⏳ Ожидание игроков" : "▶️ Игра активна"}
-    </div>
-    <div>
-      <strong>Игроков:</strong> {game.players.length}/{game.maxPlayers} 
-      {game.botCount > 0 && ` (🤖 ${game.botCount})`}
-    </div>
-  </div>
-
-  <div style={{
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '10px',
-    justifyContent: 'center'
-  }}>
-    {game.players.map((player, index) => (
-      <div key={player.user?._id || player.botId} style={{
-        backgroundColor: game.currentPlayerIndex === index ? '#eef6ff' : '#fff',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        padding: '8px 10px',
-        width: '180px',
-        fontSize: '13px',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: '4px'
+        backgroundColor: '#fafafa',
+        border: '1px solid #ddd',
+        borderRadius: '6px',
+        padding: '10px',
+        marginBottom: '20px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            backgroundColor: player.color,
-            border: '1px solid #aaa'
-          }}></div>
-          <strong>{player.isBot ? `🤖 ${player.botName}` : `👤 ${player.user.username}`}</strong>
-        </div>
-        
-        <div>💰 {player.money} $</div>
-        <div>🏠 {player.properties?.length || 0} собственности</div>
-
-        {game.currentPlayerIndex === index && (
-          <div style={{
-            marginTop: '4px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            padding: '2px 6px',
-            borderRadius: '12px',
-            fontSize: '11px',
-            alignSelf: 'center'
-          }}>
-            Сейчас ходит
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '12px',
+          fontSize: '14px'
+        }}>
+          <div>
+            <strong>Статус:</strong> {game.status === "waiting" ? "⏳ Ожидание игроков" : "▶️ Игра активна"}
           </div>
-        )}
-      </div>
-    ))}
-  </div>
-</div>
+          <div>
+            <strong>Игроков:</strong> {game.players.length}/{game.maxPlayers} 
+            {game.botCount > 0 && ` (🤖 ${game.botCount})`}
+          </div>
+        </div>
 
-      
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '10px',
+          justifyContent: 'center'
+        }}>
+          {game.players.map((player, index) => (
+            <div key={player.user?._id || player.botId} style={{
+              backgroundColor: game.currentPlayerIndex === index ? '#eef6ff' : '#fff',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+              padding: '8px 10px',
+              width: '180px',
+              fontSize: '13px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '4px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <div style={{
+                  width: '12px',
+                  height: '12px',
+                  borderRadius: '50%',
+                  backgroundColor: player.color,
+                  border: '1px solid #aaa'
+                }}></div>
+                <strong>{player.isBot ? `🤖 ${player.botName}` : `👤 ${player.user.username}`}</strong>
+              </div>
+              
+              <div>💰 {player.money} $</div>
+              <div>🏠 {player.properties?.length || 0} собственности</div>
+
+              {game.currentPlayerIndex === index && (
+                <div style={{
+                  marginTop: '4px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  padding: '2px 6px',
+                  borderRadius: '12px',
+                  fontSize: '11px',
+                  alignSelf: 'center'
+                }}>
+                  Сейчас ходит
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {game.status === "waiting" && (
         <div className="waiting-room">
           {!isPlayer && !isFull ? (
@@ -910,6 +976,7 @@ export default function Game() {
             currentPlayer={currentPlayer}
             diceRoll={diceRoll}
             onPropertyClick={handlePropertyClick}
+            gameId={id}
           />
 
           {game.status === "active" && (
@@ -921,28 +988,9 @@ export default function Game() {
                 onRollDice={rollDice}
                 onBuyProperty={buyProperty}
                 onEndTurn={endTurn}
-                // Добавляем кнопку обмена
                 canTrade={canTradeInActiveGame}
                 onOpenTradeModal={openTradeModal}
               />
-        
-              {/* Статус текущего хода
-              <div style={{
-                marginTop: "15px",
-                padding: "10px",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "4px",
-                textAlign: "center"
-              }}>
-                {isPlayerTurn 
-                  ? (!diceRoll 
-                      ? "Ваш ход! Бросьте кубики!" 
-                      : "Выполните действия и завершите ход")
-                  : game.players[game.currentPlayerIndex].isBot
-                    ? `Ход бота ${game.players[game.currentPlayerIndex].botName}`
-                    : `Ход игрока ${game.players[game.currentPlayerIndex].user.username}`
-                }
-              </div> */}
             </div>
           )}
         </div>
