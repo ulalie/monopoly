@@ -139,6 +139,9 @@ const PropertyManagementModal = ({
 
   const isDarkText = ['yellow', 'light-blue'].includes(property.group);
 
+  ///В ПРОПЕРТИ НЕ ПЕРЕДАЕТСЯ ОПИСАНИЕ ПОЛЯ (?!)
+  console.log("Property data:", property);
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md w-11/12 max-w-lg max-h-[90vh] overflow-auto">
@@ -175,7 +178,6 @@ const PropertyManagementModal = ({
               }</p>
               <p className="my-1"><strong>Стоимость:</strong> ${property.price}</p>
               <p className="my-1"><strong>Владелец:</strong> {getOwnerName()}</p>
-              
               {isRegularProperty && (
                 <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-600 rounded">
                   <p className="my-1">
@@ -206,23 +208,23 @@ const PropertyManagementModal = ({
                           <td className="py-1 px-2">${property.rent[0]}</td>
                         </tr>
                         <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
-                          <td className="py-1 px-2">С 1 домом:</td>
+                          <td className="py-1 px-2">⭐</td>
                           <td className="py-1 px-2">${property.rent[1]}</td>
                         </tr>
                         <tr className="border-b dark:border-gray-700">
-                          <td className="py-1 px-2">С 2 домами:</td>
+                          <td className="py-1 px-2">⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[2]}</td>
                         </tr>
                         <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
-                          <td className="py-1 px-2">С 3 домами:</td>
+                          <td className="py-1 px-2">⭐⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[3]}</td>
                         </tr>
                         <tr className="border-b dark:border-gray-700">
-                          <td className="py-1 px-2">С 4 домами:</td>
+                          <td className="py-1 px-2">⭐⭐⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[4]}</td>
                         </tr>
                         <tr className="bg-gray-100 dark:bg-gray-700">
-                          <td className="py-1 px-2">С отелем:</td>
+                          <td className="py-1 px-2">⭐⭐⭐⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[5]}</td>
                         </tr>
                       </tbody>

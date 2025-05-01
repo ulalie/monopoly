@@ -451,9 +451,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
             )}
             
 
-{/* Название полей */}
-{/* МОЖНО СДЕЛАТЬ ЛУЧШЕ*/}
-{![1,3,5,6,8,9,11,12,13,14,15,16,18,19,21,23,24,25,26,27,28,29,31,32,34,35,37,39].includes(property.id) && (
+{[0, 10, 20, 30].includes(property.id) && (
   <div
     className="property-name"
     style={{
@@ -524,7 +522,7 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
 )}
 
 
-{[1,3,5,6,8,9,11,12,13,14,15,16,18,19,21,23,24,25,26,27,28,29,31,32,34,35,37,39].includes(property.id) && (
+{[1,2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19,21,22,23,24,25,26,27,28,29,31,32,33,34,35,36,37,38,39].includes(property.id) && (
   <div
     style={{
       position: 'absolute',
@@ -567,9 +565,14 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
     }}
   >
     <img
-      src={(property.id === 15 || property.id === 25 || property.id === 35)
-        ? '/pic/id_15_25_35.png'
-        : `/pic/id_${property.id}.png`
+      src={
+        (property.id === 15 || property.id === 25 || property.id === 35)
+          ? '/pic/id_15_25_35.png'
+          : [2, 4, 17, 33, 38].includes(property.id)
+            ? '/pic/doll.png'
+            : [7, 22, 36].includes(property.id)
+              ? '/pic/chance.png'
+              : `/pic/id_${property.id}.png`
       }
       alt="Property"
       style={{
@@ -580,10 +583,6 @@ export default function GameBoard({ game, currentPlayer, diceRoll, onPropertyCli
     />
   </div>
 )}
-
-
-
-
 
             {/* Индикатор заложенной собственности */}
             {property.mortgaged && (
