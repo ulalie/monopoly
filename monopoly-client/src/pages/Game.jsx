@@ -207,6 +207,7 @@ export default function Game() {
     }
   };
 
+  // Остальной код функций оставляем без изменений...
   const buyProperty = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -634,25 +635,6 @@ export default function Game() {
     }
   };
 
-  const resetModals = () => {
-    console.log("Сброс состояния модальных окон");
-    // Отменяем таймер автоматического закрытия
-    if (window.updateTimeoutId) {
-      clearTimeout(window.updateTimeoutId);
-    }
-    
-    setIsTradeModalOpen(false);
-    setIsPropertyModalOpen(false);
-    
-    // Восстанавливаем автоматическое обновление
-    if (!updateIntervalId) {
-      const newIntervalId = setInterval(fetchGameData, 5000);
-      setUpdateIntervalId(newIntervalId);
-    }
-    
-    setTimeout(fetchGameData, 100);
-  };
-
   const getActionState = () => {
     console.log("Проверка состояния действий:", {
       isPlayerTurn,
@@ -674,7 +656,12 @@ export default function Game() {
 
   const { canRollDice, canBuyProperty, canEndTurn } = getActionState();
 
-  if (loading) return <div className="loading">Загрузка игры...</div>;
+  if (loading) return <div className="container mx-auto text-neutral-600 p-8 min-h-screen flex items-center justify-center">
+  <div className="text-center">
+    <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-400 mb-4"></div>
+    <p className="text-xl">Загрузка игры...</p>
+  </div>
+</div>;
   if (error) return <div className="error">Ошибка: {error}</div>;
   if (!game) return <div className="error">Игра не найдена</div>;
 
@@ -696,163 +683,140 @@ export default function Game() {
   }
 
   return (
-    <div className="game-container">
-      <h2>{game.name}</h2>
-      
-      <button 
-    onClick={fetchGameData}
-    style={{
-      padding: "8px 16px",
-      backgroundColor: "#4CAF50",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "500",
-      transition: "background-color 0.2s",
-      ":hover": {
-        backgroundColor: "#45a049"
-      }
-    }}
-  >
-    🔄 Обновить
-  </button>
-  
-  <button 
-    onClick={resetModals}
-    style={{
-      padding: "8px 16px",
-      backgroundColor: "#4CAF50",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "500",
-      transition: "background-color 0.2s",
-      ":hover": {
-        backgroundColor: "#45a049"
-      }
-    }}
-  >
-    🔄 Сбросить модалки
-  </button>
-  
-  <button 
-    onClick={() => window.location.reload()}
-    style={{
-      padding: "8px 16px",
-      backgroundColor: "#4CAF50",
-      color: "white",
-      border: "none",
-      borderRadius: "4px",
-      cursor: "pointer",
-      fontSize: "14px",
-      fontWeight: "500",
-      transition: "background-color 0.2s",
-      ":hover": {
-        backgroundColor: "#45a049"
-      }
-    }}
-  >
-    🔄 Перезагрузить
-  </button>
-      
-      {notification && (
-        <div className="notification">
-          {notification}
-        </div>
-      )}
-      
-{/*ЗАСУНУТЬ ВСЕ ИЗ playerinfo СЮДА И УБРАТЬ ЭТОТ БЛОК ВООБЩЕ.*/}
-
-      <div className="game-players-info" style={{
-  backgroundColor: '#fafafa',
-  border: '1px solid #ddd',
-  borderRadius: '6px',
-  padding: '10px',
-  marginBottom: '20px'
-}}>
-  <div style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '12px',
-    fontSize: '14px'
-  }}>
-    <div>
-      <strong>Статус:</strong> {game.status === "waiting" ? "⏳ Ожидание игроков" : "▶️ Игра активна"}
-    </div>
-    <div>
-      <strong>Игроков:</strong> {game.players.length}/{game.maxPlayers} 
-      {game.botCount > 0 && ` (🤖 ${game.botCount})`}
-    </div>
-  </div>
-
-  <div style={{
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '10px',
-    justifyContent: 'center'
-  }}>
-    {game.players.map((player, index) => (
-      <div key={player.user?._id || player.botId} style={{
-        backgroundColor: game.currentPlayerIndex === index ? '#eef6ff' : '#fff',
-        border: '1px solid #ccc',
-        borderRadius: '4px',
-        padding: '8px 10px',
-        width: '180px',
-        fontSize: '13px',
+    <div className="game-container" style={{
+      height: '100vh', 
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      padding: '5px',
+      boxSizing: 'border-box'
+    }}>
+      <div style={{ 
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        gap: '4px'
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '2px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <div style={{
-            width: '12px',
-            height: '12px',
-            borderRadius: '50%',
-            backgroundColor: player.color,
-            border: '1px solid #aaa'
-          }}></div>
-          <strong>{player.isBot ? `🤖 ${player.botName}` : `👤 ${player.user.username}`}</strong>
-        </div>
-        
-        <div>💰 {player.money} $</div>
-        <div>🏠 {player.properties?.length || 0} собственности</div>
-
-        {game.currentPlayerIndex === index && (
-          <div style={{
-            marginTop: '4px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            padding: '2px 6px',
-            borderRadius: '12px',
-            fontSize: '11px',
-            alignSelf: 'center'
+        <h2 style={{ margin: '0', fontSize: '16px' }}>{game.name}</h2>
+        {notification && (
+          <div className="notification" style={{
+            padding: '2px 8px',
+            backgroundColor: '#e6f7ff',
+            borderRadius: '4px',
+            fontSize: '12px'
           }}>
-            Сейчас ходит
+            {notification}
           </div>
         )}
       </div>
-    ))}
-  </div>
-</div>
-
       
+      {/* Компактная верхняя панель с информацией о игроках
+      <div className="game-players-info" style={{
+        backgroundColor: '#fafafa',
+        border: '1px solid #ddd',
+        borderRadius: '4px',
+        padding: '4px',
+        marginBottom: '4px',
+        maxHeight: '85px',
+        overflowY: 'auto'
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '2px',
+          fontSize: '11px'
+        }}>
+          <div>
+            <strong>Статус:</strong> {game.status === "waiting" ? "⏳ Ожидание" : "▶️ Активна"}
+          </div>
+          <div>
+            <strong>Игроков:</strong> {game.players.length}/{game.maxPlayers} 
+            {game.botCount > 0 && ` (🤖 ${game.botCount})`}
+          </div>
+        </div>
+
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '4px',
+          justifyContent: 'center'
+        }}>
+          {game.players.map((player, index) => (
+            <div key={player.user?._id || player.botId} style={{
+              backgroundColor: game.currentPlayerIndex === index ? '#eef6ff' : '#fff',
+              border: '1px solid #ccc',
+              borderRadius: '3px',
+              padding: '3px 5px',
+              width: '120px',
+              fontSize: '11px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '100%' }}>
+                <div style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: player.color,
+                  border: '1px solid #aaa'
+                }}></div>
+                <strong style={{whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '65px'}}>
+                  {player.isBot ? `${player.botName}` : `${player.user.username}`}
+                </strong>
+                {game.currentPlayerIndex === index && (
+                  <span style={{
+                    marginLeft: 'auto',
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    padding: '0px 3px',
+                    borderRadius: '8px',
+                    fontSize: '8px',
+                  }}>
+                    Ходит
+                  </span>
+                )}
+              </div>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', fontSize: '10px' }}>
+                <span>💰 {player.money}</span>
+                <span>🏠 {player.properties?.length || 0}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div> */}
+
+      {/* Компактный блок для режима ожидания */}
       {game.status === "waiting" && (
-        <div className="waiting-room">
+        <div className="waiting-room" style={{
+          padding: '4px',
+          backgroundColor: '#f5f5f5',
+          borderRadius: '4px',
+          marginBottom: '4px',
+          textAlign: 'center'
+        }}>
           {!isPlayer && !isFull ? (
             <div>
-              <p>Вы еще не присоединились к этой игре.</p>
-              <button onClick={joinGame}>
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px' }}>Вы еще не присоединились к этой игре.</p>
+              <button 
+                onClick={joinGame}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: '#4CAF50',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
                 Присоединиться к игре
               </button>
             </div>
           ) : isFull && !isPlayer ? (
-            <p>Игра заполнена. Вы не можете присоединиться.</p>
+            <p style={{ margin: '0', fontSize: '12px' }}>Игра заполнена. Вы не можете присоединиться.</p>
           ) : null}
           
           {isCreator ? (
@@ -860,17 +824,40 @@ export default function Game() {
               <button 
                 onClick={startGame}
                 disabled={!canStartGame()}
+                style={{
+                  padding: '5px 10px',
+                  backgroundColor: canStartGame() ? '#4CAF50' : '#cccccc',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: canStartGame() ? 'pointer' : 'not-allowed',
+                  fontSize: '12px'
+                }}
               >
                 НАЧАТЬ ИГРУ
               </button>
               {!canStartGame() && (
-                <p className="hint">Нужно минимум 2 участника (игроки + боты) для начала игры</p>
+                <p className="hint" style={{ margin: '3px 0 0 0', fontSize: '10px', color: '#666' }}>
+                  Нужно минимум 2 участника для начала игры
+                </p>
               )}
             </div>
           ) : isPlayer ? (
             <div>
-              <p>Ожидание, пока создатель игры начнет игру...</p>
-              <button onClick={leaveGame} className="leave-button">
+              <p style={{ margin: '0 0 4px 0', fontSize: '12px' }}>Ожидание начала игры...</p>
+              <button 
+                onClick={leaveGame} 
+                className="leave-button"
+                style={{
+                  padding: '3px 8px',
+                  backgroundColor: '#f44336',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  fontSize: '11px'
+                }}
+              >
                 Покинуть игру
               </button>
             </div>
@@ -878,18 +865,35 @@ export default function Game() {
         </div>
       )}
 
-      {/* Отображение предложений обмена, если они есть */}
+      {/* Более компактное отображение предложений обмена */}
       {isPlayer && (
-        <TradeOffers 
-          game={game}
-          currentPlayer={currentPlayer}
-          onAcceptTrade={acceptTrade}
-          onRejectTrade={rejectTrade}
-        />
+        <div style={{ maxHeight: '70px', overflowY: 'auto', marginBottom: '4px' }}>
+          <TradeOffers 
+            game={game}
+            currentPlayer={currentPlayer}
+            onAcceptTrade={acceptTrade}
+            onRejectTrade={rejectTrade}
+          />
+        </div>
       )}
 
-      <div className="game-layout">
-        <div className="player-info-sidebar">
+      {/* Основной контейнер с игровой доской и информацией */}
+      <div style={{ 
+        display: 'flex', 
+        flex: 1,
+        overflow: 'hidden',
+        minHeight: 0 // Важно для корректной работы flex в Firefox
+      }}>
+        {/* Уменьшенная боковая панель с информацией о игроках */}
+        <div style={{ 
+          width: '160px',
+          overflowY: 'auto',
+          padding: '3px',
+          marginRight: '4px',
+          backgroundColor: '#f8f8f8',
+          borderRadius: '4px',
+          fontSize: '14px'
+        }}>
           {game.players.map((player, index) => (
             <PlayerInfo
               key={player.user?._id || player.botId || `bot-${index}`}
@@ -904,16 +908,31 @@ export default function Game() {
           ))}
         </div>
 
-        <div className="main-board">
-          <GameBoard
-            game={game}
-            currentPlayer={currentPlayer}
-            diceRoll={diceRoll}
-            onPropertyClick={handlePropertyClick}
-          />
+        {/* Уменьшенная основная часть с игровой доской */}
+        <div style={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          minWidth: 0 // Важно для корректной работы flex в Firefox
+        }}>
+          <div style={{ 
+            flex: 1,
+            overflow: 'auto',
+            marginBottom: '4px',
+            minHeight: 0 // Важно для корректной работы flex в Firefox
+          }}>
+            <GameBoard
+              game={game}
+              currentPlayer={currentPlayer}
+              diceRoll={diceRoll}
+              onPropertyClick={handlePropertyClick}
+              gameId={id}
+            />
+          </div>
 
           {game.status === "active" && (
-            <div>
+            <div style={{ padding: '2px 0' }}>
               <GameActions
                 canRollDice={canRollDice}
                 canBuyProperty={canBuyProperty}
@@ -921,34 +940,15 @@ export default function Game() {
                 onRollDice={rollDice}
                 onBuyProperty={buyProperty}
                 onEndTurn={endTurn}
-                // Добавляем кнопку обмена
                 canTrade={canTradeInActiveGame}
                 onOpenTradeModal={openTradeModal}
               />
-        
-              {/* Статус текущего хода
-              <div style={{
-                marginTop: "15px",
-                padding: "10px",
-                backgroundColor: "#f8f9fa",
-                borderRadius: "4px",
-                textAlign: "center"
-              }}>
-                {isPlayerTurn 
-                  ? (!diceRoll 
-                      ? "Ваш ход! Бросьте кубики!" 
-                      : "Выполните действия и завершите ход")
-                  : game.players[game.currentPlayerIndex].isBot
-                    ? `Ход бота ${game.players[game.currentPlayerIndex].botName}`
-                    : `Ход игрока ${game.players[game.currentPlayerIndex].user.username}`
-                }
-              </div> */}
             </div>
           )}
         </div>
       </div>
 
-      {/* Модальное окно для предложения обмена */}
+      {/* Модальные окна - они не влияют на прокрутку */}
       {isPlayer && (
         <TradeModal
           isOpen={isTradeModalOpen}
@@ -959,7 +959,6 @@ export default function Game() {
         />
       )}
 
-      {/* Модальное окно управления собственностью */}
       <PropertyManagementModal
         isOpen={isPropertyModalOpen}
         onClose={closePropertyModal}

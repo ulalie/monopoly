@@ -1484,48 +1484,76 @@ async createGame(req, res) {
       res.status(500).json({ message: "Ошибка отклонения обмена" });
     }
   }
+async sendChatMessage(req, res) {
+  try {
+    const gameId = req.params.id;
+    const userId = req.user.id;
+    const { message } = req.body;
 
-  async sendChatMessage(req, res) {
-    try {
-      const gameId = req.params.id;
-      const userId = req.user.id;
-      const { message } = req.body;
-
-      if (!message || message.trim() === "") {
-        return res
-          .status(400)
-          .json({ message: "Сообщение не может быть пустым" });
-      }
-
-      const game = await Game.findById(gameId)
-        .populate("creator", "username")
-        .populate("players.user", "username");
-
-      if (!game) {
-        return res.status(404).json({ message: "Игра не найдена" });
-      }
-
-      const player = game.players.find((p) => String(p.user._id) === String(userId));
-
-      if (!player) {
-        return res
-          .status(403)
-          .json({ message: "Вы не участвуете в этой игре" });
-      }
-
-      game.chat.push({
-        user: userId,
-        message: `${player.user.username}: ${message}`,
-        timestamp: new Date(),
-      });
-
-      await game.save();
-      res.json(game);
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Ошибка отправки сообщения" });
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ message: "Сообщение не может быть пустым" });
     }
+
+    // Проверяем, что gameId валидный ObjectId перед запросом
+    if (!gameId || typeof gameId !== 'string' || gameId === 'undefined') {
+      return res.status(400).json({ message: "Неверный идентификатор игры" });
+    }
+
+    const game = await Game.findById(gameId)
+      .populate("creator", "username")
+      .populate("players.user", "username");
+
+    if (!game) {
+      return res.status(404).json({ message: "Игра не найдена" });
+    }
+
+    // Проверяем, является ли userId валидной строкой
+    if (!userId || typeof userId !== 'string') {
+      return res.status(400).json({ message: "Неверный идентификатор пользователя" });
+    }
+
+    // Улучшаем поиск игрока с безопасной проверкой полей
+    const player = game.players.find(p => {
+      if (p.isBot) {
+        // Для ботов сравниваем по свойству user, если оно есть
+        return p.user ? String(p.user) === String(userId) : false;
+      } else {
+        // Для обычных игроков используем _id, если оно доступно
+        return p.user && p.user._id ? String(p.user._id) === String(userId) : false;
+      }
+    });
+
+    if (!player) {
+      return res.status(403).json({ message: "Вы не участвуете в этой игре" });
+    }
+
+    // Определяем имя пользователя
+    let username = "";
+    if (player.isBot) {
+      username = player.botName || "Бот";
+    } else if (player.user && player.user.username) {
+      username = player.user.username;
+    } else {
+      username = "Игрок";
+    }
+
+    // Добавляем сообщение в чат - только с текстовым полем username, без ссылок на объекты
+    game.chat.push({
+      message: message,
+      timestamp: new Date(),
+      user: {
+        username: username
+      }
+    });
+
+    await game.save();
+    res.json(game);
+  } catch (error) {
+    console.log("Ошибка отправки сообщения:", error);
+    res.status(500).json({ message: "Ошибка отправки сообщения", error: error.message });
   }
+}
+
 }
 
 

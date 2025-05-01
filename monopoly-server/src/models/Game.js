@@ -70,13 +70,15 @@ players: [
       completedAt: Date,
     },
   ],
-  chat: [
-    {
-      user: { type: Schema.Types.ObjectId, ref: "User" },
-      message: String,
-      timestamp: { type: Date, default: Date.now },
-    },
-  ],
+ chat: [{
+  message: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  user: {
+    username: { type: String }
+    // Можно добавить _id, но не как ссылку, а как простую строку
+    // _id: { type: String }
+  }
+}],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

@@ -161,7 +161,12 @@ export default function Lobby() {
     setCurrentPage(1); 
   };
 
-  if (loading && games.length === 0) return <div className="loading">Загрузка игр...</div>;
+  if (loading && games.length === 0) return<div className="container mx-auto text-neutral-600 p-8 min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-400 mb-4"></div>
+        <p className="text-xl">Загрузка игр...</p>
+      </div>
+    </div>;
   if (error) return <div className="error">Ошибка: {error}</div>;
 
   const maxBots = maxPlayers > 1 ? maxPlayers - 1 : 0;
@@ -204,34 +209,53 @@ export default function Lobby() {
   }
 
   return (
-    <div className="lobby-container">
-      <h2>Игровое лобби</h2>
+    <div className="container mx-auto text-neutral-600 p-8 min-h-screen">
+      <header className="flex items-center justify-between mb-8">
+        <div className="flex items-center m-2">
+          <img src="../../public/logo.png" className="w-8 h-8"></img>
+          <h1 className="m-2 text-2xl font-bold">Monopoly Lobby</h1>
+        </div>
+        <Link 
+          to="/profile" 
+          className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors"
+        >
+          Профиль
+        </Link>
+      </header>
 
-      <div className="create-game-form">
-        <h3>Создать новую игру</h3>
-        <form onSubmit={createGame}>
-          <div className="form-group">
-            <label>Название игры:</label>
+      <section className="mb-8">
+        <h2 className="text-3xl font-bold mb-4 text-center">Создать новую игру</h2>
+        
+        <form onSubmit={createGame} className="max-w-lg mx-auto bg-white p-6 rounded-lg shadow-md">
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+              {error}
+            </div>
+          )}
+          
+          <div className="mb-4">
+            <label className="block text-lg mb-2">Название игры:</label>
             <input
               type="text"
               value={newGameName}
               onChange={(e) => setNewGameName(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
               required
             />
           </div>
 
-          <div className="form-group">
-            <label>Максимум игроков (включая ботов):</label>
+          <div className="mb-4">
+            <label className="block text-lg mb-2">Максимум игроков:</label>
             <select
               value={maxPlayers}
               onChange={(e) => {
                 const newMaxPlayers = Number(e.target.value);
                 setMaxPlayers(newMaxPlayers);
-                
                 if (includeBot && botCount >= newMaxPlayers) {
                   setBotCount(newMaxPlayers - 1);
                 }
               }}
+              className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
             >
               <option value="2">2</option>
               <option value="3">3</option>
@@ -240,114 +264,144 @@ export default function Lobby() {
             </select>
           </div>
 
-          <div className="form-group">
-            <label>
+          <div className="mb-4">
+            <label className="flex items-center space-x-2">
               <input
                 type="checkbox"
                 checked={includeBot}
                 onChange={(e) => setIncludeBot(e.target.checked)}
+                className="h-5 w-5 text-emerald-400 rounded focus:ring-emerald-400"
               />
-              Добавить ботов в игру
+              <span className="text-lg">Добавить ботов в игру</span>
             </label>
             
             {includeBot && (
-              <div className="bot-count-selector">
-                <label>Количество ботов:</label>
+              <div className="mt-3 ml-7">
+                <label className="block text-lg mb-2">Количество ботов:</label>
                 <select
                   value={botCount}
                   onChange={(e) => setBotCount(Number(e.target.value))}
+                  className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-transparent"
                 >
                   {Array.from({ length: maxBots }, (_, i) => i + 1).map(num => (
                     <option key={num} value={num}>{num}</option>
                   ))}
                 </select>
-                <p className="hint">Максимум {maxBots} ботов для этой игры</p>
+                <p className="text-sm text-gray-500 mt-1">Максимум {maxBots} ботов для этой игры</p>
               </div>
             )}
           </div>
           
-          <button type="submit">Создать игру</button>
+          <button 
+            type="submit" 
+            className="w-full rounded-xl bg-emerald-400 px-5 py-3 text-xl text-amber-50 hover:bg-emerald-300 transition-colors"
+          >
+            Создать игру
+          </button>
         </form>
-      </div>
+      </section>
 
-      <div className="games-list">
-        <div className="games-list-header">
-          <h3>Доступные игры</h3>
+      <section className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-3xl font-bold">Доступные игры</h2>
           
-          <div className="pagination-controls">
-            <label>
-              Игр на странице:
-              <select value={gamesPerPage} onChange={handleGamesPerPageChange}>
+          <div className="flex items-center space-x-4">
+            <div>
+              <label className="mr-2">Игр на странице:</label>
+              <select 
+                value={gamesPerPage} 
+                onChange={handleGamesPerPageChange}
+                className="p-1 border border-gray-300 rounded focus:ring-2 focus:ring-emerald-400"
+              >
                 <option value="5">5</option>
                 <option value="10">10</option>
                 <option value="25">25</option>
                 <option value="50">50</option>
               </select>
-            </label>
+            </div>
             
-            <div className="games-count">
+            <div className="text-gray-600">
               Показано {games.length > 0 ? (currentPage - 1) * gamesPerPage + 1 : 0}-
               {Math.min(currentPage * gamesPerPage, totalGames)} из {totalGames}
             </div>
           </div>
         </div>
         
-        <div className="games-list-content" style={{ minHeight: '400px' }}>
+        <div className="bg-white rounded-lg shadow-md p-4 min-h-[400px]">
           {games.length === 0 ? (
-            <p>Нет доступных игр. Создайте игру, чтобы начать!</p>
+            <p className="text-center text-lg py-8">Нет доступных игр. Создайте игру, чтобы начать!</p>
           ) : (
             <>
-              {loading && <div className="list-loading">Обновление списка игр...</div>}
+              {loading && <div className="text-center py-4">Обновление списка игр...</div>}
               
-              {games.map((game) => (
-                <div key={game._id} className="game-item">
-                  <h4>{game.name}</h4>
-                  <p>Создал: {game.creator.username}</p>
-                  <p>
-                    Статус: {game.status === "waiting" ? "Ожидание" : "Активна"}
-                  </p>
-                  <p>
-                    Игроки: {game.players.length}/{game.maxPlayers}
-                    {game.botCount > 0 && ` (включая ${game.botCount} ботов)`}
-                  </p>
-                  <button
-                    onClick={() => joinGame(game._id)}
-                    disabled={
-                      game.status !== "waiting" ||
-                      game.players.length >= game.maxPlayers
-                    }
-                  >
-                    {game.status !== "waiting"
-                      ? "Игра в процессе"
-                      : game.players.length >= game.maxPlayers
-                      ? "Игра заполнена"
-                      : "Присоединиться"}
-                  </button>
-                </div>
-              ))}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {games.map((game) => (
+                  <div key={game._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <h3 className="text-xl font-semibold mb-2">{game.name}</h3>
+                    <p className="mb-1">Создал: {game.creator.username}</p>
+                    <p className="mb-1">
+                      Статус: {game.status === "waiting" ? (
+                        <span className="text-yellow-600">⏳ Ожидание</span>
+                      ) : (
+                        <span className="text-green-600">▶️ Активна</span>
+                      )}
+                    </p>
+                    <p className="mb-3">
+                      Игроки: {game.players.length}/{game.maxPlayers}
+                      {game.botCount > 0 && ` (🤖 ${game.botCount})`}
+                    </p>
+                    <button
+                      onClick={() => joinGame(game._id)}
+                      disabled={
+                        game.status !== "waiting" ||
+                        game.players.length >= game.maxPlayers
+                      }
+                      className={`w-full rounded-lg py-2 px-4 ${
+                        game.status !== "waiting" || game.players.length >= game.maxPlayers
+                          ? "bg-gray-300 cursor-not-allowed"
+                          : "bg-emerald-400 hover:bg-emerald-300 text-amber-50"
+                      } transition-colors`}
+                    >
+                      {game.status !== "waiting"
+                        ? "Игра в процессе"
+                        : game.players.length >= game.maxPlayers
+                        ? "Игра заполнена"
+                        : "Присоединиться"}
+                    </button>
+                  </div>
+                ))}
+              </div>
             </>
           )}
         </div>
         
         {totalPages > 1 && (
-          <div className="pagination">
+          <div className="flex justify-center mt-6 space-x-2">
             <button 
               onClick={handlePrevPage} 
               disabled={currentPage === 1}
-              className="pagination-button"
+              className={`px-4 py-2 rounded-lg ${
+                currentPage === 1 
+                  ? "bg-gray-200 cursor-not-allowed" 
+                  : "bg-emerald-400 hover:bg-emerald-300 text-amber-50"
+              }`}
             >
               &laquo; Пред.
             </button>
             
-            <div className="pagination-pages">
+            <div className="flex space-x-1">
               {visiblePageNumbers.map((page, index) => (
                 page === '...' ? (
-                  <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>
+                  <span key={`ellipsis-${index}`} className="px-4 py-2">...</span>
                 ) : (
                   <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`pagination-button ${currentPage === page ? 'active' : ''}`}
+                    className={`px-4 py-2 rounded-lg ${
+                      currentPage === page 
+                        ? "bg-emerald-500 text-white" 
+                        : "bg-gray-200 hover:bg-gray-300"
+                    }`}
                   >
                     {page}
                   </button>
@@ -358,16 +412,25 @@ export default function Lobby() {
             <button 
               onClick={handleNextPage} 
               disabled={currentPage === totalPages}
-              className="pagination-button"
+              className={`px-4 py-2 rounded-lg ${
+                currentPage === totalPages 
+                  ? "bg-gray-200 cursor-not-allowed" 
+                  : "bg-emerald-400 hover:bg-emerald-300 text-amber-50"
+              }`}
             >
               След. &raquo;
             </button>
           </div>
         )}
-      </div>
+      </section>
 
-      <div className="navigation">
-        <Link to="/profile">Назад в профиль</Link>
+      <div className="text-center mt-8">
+        <Link 
+          to="/" 
+          className="inline-block rounded-lg bg-gray-200 px-6 py-2 text-lg hover:bg-gray-300 transition-colors"
+        >
+          На главную
+        </Link>
       </div>
     </div>
   );
