@@ -36,6 +36,19 @@ async createGame(req, res) {
       });
     }
 
+    const initialProperties = initializeMonopolyProperties().map(prop => ({
+      id: prop.id,
+      name: prop.name,
+      type: prop.type,
+      price: prop.price,
+      rent: prop.rent,
+      group: prop.group,
+      description: prop.description, 
+      pic: prop.pic,                  
+      houses: 0,
+      mortgaged: false
+    }));
+
     const newGame = new Game({
       name,
       creator: userId,
@@ -51,7 +64,7 @@ async createGame(req, res) {
           color: "#" + Math.floor(Math.random() * 16777215).toString(16),
         },
       ],
-      properties: [...initializeMonopolyProperties()],
+      properties: initialProperties,
       chat: [],
       lastDiceRoll: null,
       paymentPending: null,

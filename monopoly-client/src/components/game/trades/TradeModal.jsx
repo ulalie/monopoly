@@ -152,12 +152,12 @@ const TradeModal = ({
   const noAvailablePlayers = availablePlayers.length === 0;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
-      <div className="bg-white dark:bg-gray-800 w-11/12 max-w-2xl rounded shadow-md max-h-[90vh] overflow-auto p-4 dark:text-white">
-        <div className="flex justify-between items-center border-b pb-3 mb-4">
-          <h3 className="m-0 text-lg font-medium">Предложить обмен</h3>
+    <div className="fixed inset-0 bg-neutral-600/70 backdrop-blur-sm flex items-center justify-center z-40">
+      <div className="bg-white dark:bg-gray-800 w-11/12 max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-auto p-8 dark:text-white border border-emerald-100 dark:border-emerald-900/20">
+        <div className="flex justify-between items-center border-b border-emerald-100 dark:border-emerald-800/30 pb-4 mb-6">
+          <h3 className="m-0 text-xl font-semibold text-neutral-700 dark:text-emerald-400">Предложить обмен</h3>
           <button 
-            className="bg-transparent border-0 text-2xl cursor-pointer"
+            className="bg-transparent border-0 text-2xl cursor-pointer text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
             onClick={onClose}
           >
             ✕
@@ -166,76 +166,76 @@ const TradeModal = ({
 
         <div>
           {error && (
-            <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded mb-4">
+            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 p-4 rounded-xl mb-6 border-l-4 border-red-400 animate-pulse">
               {error}
             </div>
           )}
 
           {noAvailablePlayers ? (
-            <div className="text-gray-600 dark:text-gray-300 p-2">
-              <p>Нет доступных игроков для обмена.</p>
+            <div className="text-neutral-600 dark:text-neutral-300 p-4 bg-neutral-50 dark:bg-neutral-700/30 rounded-xl mb-6">
+              <p className="text-lg">Нет доступных игроков для обмена.</p>
             </div>
           ) : (
             <>
-              <div className="mb-4">
-                <label className="block mb-1">Выберите игрока для обмена:</label>
+              <div className="mb-6">
+                <label className="block mb-2 text-neutral-700 dark:text-neutral-300 font-medium">Выберите игрока для обмена:</label>
                 <select 
-                  className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-base dark:bg-gray-700 mt-1"
+                  className="w-full p-3 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-base dark:bg-gray-700 focus:ring-2 focus:ring-emerald-300 dark:focus:ring-emerald-700 focus:outline-none transition-shadow"
                   value={selectedPlayer ? game.players.indexOf(selectedPlayer) : ""}
                   onChange={(e) => handlePlayerSelect(e.target.value)}
                 >
-                  <option value="">-- Выберите игрока --</option>
+                  <option value=""> Выберите игрока </option>
                   {availablePlayers.map((player, index) => (
                     <option 
                       key={player.isBot ? `bot-${index}` : player.user._id} 
                       value={player.isBot ? player.user._id : player.user._id}
                     >
-                      {player.isBot ? `${player.botName || "Бот"} [БОТ]` : player.user.username}
+                      {player.isBot ? `${player.botName || "Бот"}` : player.user.username}
                     </option>
                   ))}
                 </select>
               </div>
 
               {selectedPlayer && (
-                <div className="flex flex-wrap gap-4 mb-4">
-                  <div className="flex-1 min-w-[250px] bg-gray-50 dark:bg-gray-700 rounded p-3">
-                    <h4 className="font-medium mb-2">Ваше предложение</h4>
-                    <div className="mb-3">
-                      <label className="block mb-1">Деньги:</label>
+                <div className="flex flex-wrap gap-6 mb-6">
+                  <div className="flex-1 min-w-[250px] dark:bg-emerald-900/20 rounded-xl p-5 shadow-md">
+                    <h4 className="font-semibold mb-4 text-emerald-700 dark:text-emerald-400 text-lg">Ваше предложение</h4>
+                    <div className="mb-4">
+                      <label className="block mb-2 font-medium text-neutral-700 dark:text-neutral-300">Деньги:</label>
                       <input 
                         type="number" 
                         min="0" 
                         max={currentPlayer.money}
                         value={offerMoney}
                         onChange={(e) => setOfferMoney(e.target.value)}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-base dark:bg-gray-700"
+                        className="w-full p-3 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-base dark:bg-gray-700 focus:ring-2 focus:ring-emerald-300 dark:focus:ring-emerald-700 focus:outline-none transition-shadow"
                       />
                     </div>
-                    <div className="mt-3">
-                      <h5 className="font-medium mb-1">Ваши свойства:</h5>
+                    <div className="mt-4">
+                      <h5 className="font-medium mb-2 text-neutral-700 dark:text-neutral-300">Ваши свойства:</h5>
                       {myProperties.length === 0 ? (
-                        <p className="text-gray-500 dark:text-gray-400">У вас нет доступных свойств для обмена</p>
+                        <p className="text-neutral-500 dark:text-neutral-400 p-3 bg-white/50 dark:bg-black/10 rounded-lg">У вас нет доступных свойств для обмена</p>
                       ) : (
-                        <ul className="list-none p-0 m-0 max-h-[200px] overflow-y-auto">
+                        <ul className="list-none p-0 m-0 max-h-[200px] overflow-y-auto space-y-2 pr-1">
                           {myProperties.map(property => (
                             <li 
                               key={property.id} 
                               onClick={() => toggleOfferProperty(property.id)}
-                              className={`flex items-center p-2 rounded mb-1 cursor-pointer border ${
+                              className={`flex items-center p-3 rounded-lg cursor-pointer border transition-all ${
                                 offerProperties.includes(property.id) 
-                                  ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600' 
-                                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                                  ? 'bg-emerald-100 dark:bg-emerald-800/40 border-emerald-300 dark:border-emerald-700 shadow-sm' 
+                                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-800/70'
                               }`}
                             >
                               <input 
                                 type="checkbox" 
                                 checked={offerProperties.includes(property.id)}
                                 onChange={() => {}} 
-                                className="mr-2"
+                                className="mr-3 h-5 w-5 accent-emerald-500"
                               />
-                              <span>{property.name}</span>
+                              <span className="font-medium">{property.name}</span>
                               <span 
-                                className={`inline-block w-2.5 h-2.5 rounded-full ml-1.5`}
+                                className={`inline-block w-3 h-3 rounded-full ml-2.5`}
                                 style={{ backgroundColor: getGroupColor(property.group) }}
                               ></span>
                             </li>
@@ -245,46 +245,46 @@ const TradeModal = ({
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-[250px] bg-gray-50 dark:bg-gray-700 rounded p-3">
-                    <h4 className="font-medium mb-2">Вы запрашиваете</h4>
-                    <div className="mb-3">
-                      <label className="block mb-1">Деньги:</label>
+                  <div className="flex-1 min-w-[250px] dark:bg-emerald-900/20 rounded-xl p-5 shadow-md">
+                    <h4 className="font-semibold mb-4 text-emerald-700 dark:text-emerald-400 text-lg">Вы запрашиваете</h4>
+                    <div className="mb-4">
+                      <label className="block mb-2 font-medium text-neutral-700 dark:text-neutral-300">Деньги:</label>
                       <input 
                         type="number" 
                         min="0" 
                         max={selectedPlayer.money || 0}
                         value={requestMoney}
                         onChange={(e) => setRequestMoney(e.target.value)}
-                        className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded text-base dark:bg-gray-700"
+                        className="w-full p-3 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-base dark:bg-gray-700 focus:ring-2 focus:ring-emerald-300 dark:focus:ring-emerald-700 focus:outline-none transition-shadow"
                       />
                     </div>
-                    <div className="mt-3">
-                      <h5 className="font-medium mb-1">
+                    <div className="mt-4">
+                      <h5 className="font-medium mb-2 text-neutral-700 dark:text-neutral-300">
                         Свойства {selectedPlayer.isBot ? (selectedPlayer.botName || "Бота") : selectedPlayer.user.username}:
                       </h5>
                       {selectedPlayerProperties.length === 0 ? (
-                        <p className="text-gray-500 dark:text-gray-400">У игрока нет доступных свойств для обмена</p>
+                        <p className="text-neutral-500 dark:text-neutral-400 p-3 bg-white/50 dark:bg-black/10 rounded-lg">У игрока нет доступных свойств для обмена</p>
                       ) : (
-                        <ul className="list-none p-0 m-0 max-h-[200px] overflow-y-auto">
+                        <ul className="list-none p-0 m-0 max-h-[200px] overflow-y-auto space-y-2 pr-1">
                           {selectedPlayerProperties.map(property => (
                             <li 
                               key={property.id} 
                               onClick={() => toggleRequestProperty(property.id)}
-                              className={`flex items-center p-2 rounded mb-1 cursor-pointer border ${
+                              className={`flex items-center p-3 rounded-lg cursor-pointer border transition-all ${
                                 requestProperties.includes(property.id) 
-                                  ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-400 dark:border-blue-600' 
-                                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+                                  ? 'bg-emerald-100 dark:bg-emerald-800/40 border-emerald-300 dark:border-emerald-700 shadow-sm' 
+                                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-800/70'
                               }`}
                             >
                               <input 
                                 type="checkbox" 
                                 checked={requestProperties.includes(property.id)}
                                 onChange={() => {}} 
-                                className="mr-2"
+                                className="mr-3 h-5 w-5 accent-emerald-500"
                               />
-                              <span>{property.name}</span>
+                              <span className="font-medium">{property.name}</span>
                               <span 
-                                className={`inline-block w-2.5 h-2.5 rounded-full ml-1.5`}
+                                className={`inline-block w-3 h-3 rounded-full ml-2.5`}
                                 style={{ backgroundColor: getGroupColor(property.group) }}
                               ></span>
                             </li>
@@ -297,27 +297,27 @@ const TradeModal = ({
               )}
 
               {selectedPlayer && selectedPlayer.isBot && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-2 border-yellow-400 p-3 rounded mt-4 mb-2 text-sm">
-                  <p><strong>Примечание:</strong> Боты принимают решение о принятии сделки в зависимости от её выгодности и некоторого элемента случайности.</p>
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 rounded-xl mt-6 mb-4 text-sm">
+                  <p className="text-neutral-700 dark:text-neutral-300"><strong>Примечание:</strong> Боты принимают решение о принятии сделки в зависимости от её выгодности и некоторого элемента случайности.</p>
                 </div>
               )}
             </>
           )}
         </div>
 
-        <div className="flex justify-end gap-2 mt-4 pt-3 border-t">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-emerald-100 dark:border-emerald-800/30">
           <button 
-            className="px-3 py-1.5 bg-gray-500 hover:bg-gray-600 text-white rounded"
+            className="px-6 py-3 bg-neutral-500 hover:bg-neutral-600 text-white rounded-xl font-medium transition-colors shadow-sm hover:shadow"
             onClick={onClose}
           >
             Отмена
           </button>
           <button 
-            className={`px-3 py-1.5 ${
+            className={`px-6 py-3 ${
               (!selectedPlayer || noAvailablePlayers) 
-                ? 'bg-gray-300 cursor-not-allowed' 
-                : 'bg-indigo-500 hover:bg-indigo-600'
-            } text-white rounded`}
+                ? 'bg-neutral-300 cursor-not-allowed dark:bg-neutral-700' 
+                : 'bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 shadow-md hover:shadow-lg'
+            } text-white rounded-xl font-medium transition-all`}
             onClick={handleProposeTrade} 
             disabled={!selectedPlayer || noAvailablePlayers}
           >

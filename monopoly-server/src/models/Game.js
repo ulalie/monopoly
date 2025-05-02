@@ -39,6 +39,8 @@ players: [
       houses: { type: Number, default: 0 },
       mortgaged: { type: Boolean, default: false },
       group: String,
+      description: String, 
+    pic: String  ,
     },
   ],
   lastDiceRoll: {

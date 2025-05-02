@@ -138,12 +138,9 @@ const PropertyManagementModal = ({
   };
 
   const isDarkText = ['yellow', 'light-blue'].includes(property.group);
-
-  ///В ПРОПЕРТИ НЕ ПЕРЕДАЕТСЯ ОПИСАНИЕ ПОЛЯ (?!)
-  console.log("Property data:", property);
-
+  
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+    <div className="fixed inset-0 bg-neutral-600/70  flex items-center justify-center z-40">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md w-11/12 max-w-lg max-h-[90vh] overflow-auto">
         <div 
           className={`px-4 py-3 flex justify-between items-center rounded-t-lg ${isDarkText ? 'text-black' : 'text-white'}`}
@@ -169,6 +166,14 @@ const PropertyManagementModal = ({
             <h4 className="text-center mt-0 mb-3 text-lg font-medium">
               {property.name}
             </h4>
+            
+  {property.description && (
+    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
+      <p className="text-sm italic text-gray-600 dark:text-gray-300">
+        {property.description}
+      </p>
+    </div>
+  )}
             
             <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded mb-4">
               <p className="my-1"><strong>Тип:</strong> {
