@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import Footer from "../components/utils/Footer";
 
 export default function Lobby() {
   const [games, setGames] = useState([]);
@@ -432,6 +433,7 @@ export default function Lobby() {
           На главную
         </Link>
       </div>
+      <Footer/>
     </div>
   );
 }

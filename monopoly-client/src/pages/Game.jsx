@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import GameBoard from "../components/game/board/GameBoard";
 import PlayerInfo from "../components/game/player/PlayerInfo";
@@ -29,42 +29,8 @@ export default function Game() {
     setTimeout(() => setNotification(""), 5000);
   };
 
-  useEffect(() => {
-    fetchGameData();
-    // Сохраняем ID интервала, чтобы потом можно было его очистить
-    const intervalId = setInterval(fetchGameData, 5000);
-    setUpdateIntervalId(intervalId);
-    
-    return () => {
-      clearInterval(intervalId);
-      if (window.updateTimeoutId) clearTimeout(window.updateTimeoutId);
-    };
-  }, [id]);
-
-  const canStartGame = () => {
-    if (!game || !currentPlayer) return false;
-    
-    const isCreator = String(game.creator) === String(currentPlayer.user._id);
-    console.log("Проверка создателя:", {
-      создатель: game.creator,
-      текущийИгрок: currentPlayer.user._id,
-      совпадает: isCreator
-    });
-    
-    const totalPlayers = game.players.length;
-    const hasEnoughPlayers = totalPlayers >= 2;
-    
-    console.log("Проверка игроков:", {
-      всего: totalPlayers,
-      достаточно: hasEnoughPlayers
-    });
-    
-    return isCreator && 
-           game.status === "waiting" && 
-           hasEnoughPlayers;
-  };
-
-  const fetchGameData = async () => {
+  // Используем useCallback для мемоизации функции fetchGameData
+  const fetchGameData = useCallback(async () => {
     try {
       // Проверяем состояние всех модальных окон
       if (isTradeModalOpen || isPropertyModalOpen) {
@@ -123,6 +89,41 @@ export default function Game() {
       handleApiError(err, "Ошибка загрузки данных игры");
       setLoading(false);
     }
+  }, [id, navigate, isTradeModalOpen, isPropertyModalOpen]); // Зависимости для useCallback
+
+  useEffect(() => {
+    fetchGameData();
+    // Сохраняем ID интервала, чтобы потом можно было его очистить
+    const intervalId = setInterval(fetchGameData, 5000);
+    setUpdateIntervalId(intervalId);
+    
+    return () => {
+      clearInterval(intervalId);
+      if (window.updateTimeoutId) clearTimeout(window.updateTimeoutId);
+    };
+  }, [fetchGameData]); // Теперь fetchGameData - зависимость
+
+  const canStartGame = () => {
+    if (!game || !currentPlayer) return false;
+    
+    const isCreator = String(game.creator) === String(currentPlayer.user._id);
+    console.log("Проверка создателя:", {
+      создатель: game.creator,
+      текущийИгрок: currentPlayer.user._id,
+      совпадает: isCreator
+    });
+    
+    const totalPlayers = game.players.length;
+    const hasEnoughPlayers = totalPlayers >= 2;
+    
+    console.log("Проверка игроков:", {
+      всего: totalPlayers,
+      достаточно: hasEnoughPlayers
+    });
+    
+    return isCreator && 
+           game.status === "waiting" && 
+           hasEnoughPlayers;
   };
 
   const rollDice = async () => {

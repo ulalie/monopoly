@@ -1,12 +1,40 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import Footer from "../components/utils/Footer";
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:8080/auth/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error("Ошибка проверки авторизации:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const handleLogout = () => {
@@ -14,32 +42,71 @@ export default function Home() {
     window.location.href = "/";
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-400"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto text-neutral-600 p-8 min-h-screen">
       <header className="flex items-center justify-between mb-12">
         <div className="flex items-center m-2">
-        <img src="../../public/logo.png" className="w-8 h-8"></img>
-        <h1 className="m-2 text-2xl font-bold">Monopoly</h1>
+          <img src="../../public/logo.png" className="w-8 h-8" alt="logo" />
+          <h1 className="m-2 text-2xl font-bold">Monopoly</h1>
         </div>
-      {isAuthenticated ? (
-        <div>
-          <Link to="/profile" className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors">
-            Профиль
-          </Link>
-          <button onClick={handleLogout} className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors">
-            Выйти
-          </button>
-        </div>
-      ) : (
-        <div className=" m-2 p-2">
-          <Link to="/auth/login" className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors">
-            Войти
-          </Link>
-          <Link to="/auth/registration" className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors">
-            Регистрация
-          </Link>
-        </div>
-      )}
+        {isAuthenticated ? (
+          <div className="flex items-center">
+            
+            
+            { userData?.roles?.includes("ADMIN") && (
+              <Link
+                to="/admin"
+                className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-rose-400 transition-colors"
+              >
+                Список пользователей
+              </Link>
+            )}
+
+            <Link
+              to="/lobby"
+              className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors"
+            >
+              В лобби
+            </Link>
+
+            <Link
+              to="/profile"
+              className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors"
+            >
+              Профиль
+            </Link>
+            
+            <button
+              onClick={handleLogout}
+              className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors"
+            >
+              Выйти
+            </button>
+          </div>
+        ) : (
+          <div className="m-2 p-2">
+            <Link
+              to="/auth/login"
+              className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors"
+            >
+              Войти
+            </Link>
+            <Link
+              to="/auth/registration"
+              className="rounded-lg bg-emerald-400 m-2 px-6 py-2 text-xl text-amber-50 hover:bg-emerald-300 transition-colors"
+            >
+              Регистрация
+            </Link>
+          </div>
+        )}
       </header>
 
 
@@ -96,6 +163,7 @@ export default function Home() {
         </div>
       )}
       </section>
+      <Footer/>
     </div>
   );
 }

@@ -10,7 +10,6 @@ const GameActions = ({
   canTrade,
   onOpenTradeModal
 }) => {
-  // Style for the buttons with consistent width
   const buttonStyle = (enabled) => ({
     padding: "12px 16px",
     backgroundColor: enabled ? "oklch(0.696 0.17 162.48)" : "#cccccc",

@@ -5,7 +5,7 @@ export default function PlayerInfo({
   isCurrentPlayer,
   isActivePlayer,
 }) {
-  ///добавить статус и количество игроков
+
   return (
     <div style={{
       backgroundColor: isCurrentPlayer ? '#eef6ff' : '#fff',

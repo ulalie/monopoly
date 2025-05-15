@@ -141,7 +141,7 @@ const PropertyManagementModal = ({
   
   return (
     <div className="fixed inset-0 bg-neutral-600/70  flex items-center justify-center z-40">
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md w-11/12 max-w-lg max-h-[90vh] overflow-auto">
+      <div className="bg-white  rounded-lg shadow-md w-11/12 max-w-lg max-h-[90vh] overflow-auto">
         <div 
           className={`px-4 py-3 flex justify-between items-center rounded-t-lg ${isDarkText ? 'text-black' : 'text-white'}`}
           style={{ backgroundColor: property.group ? getGroupColor(property.group) : '#f8f8f8' }}
@@ -155,9 +155,9 @@ const PropertyManagementModal = ({
           </button>
         </div>
 
-        <div className="p-4 dark:text-white">
+        <div className="p-4 ">
           {error && (
-            <div className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 p-3 rounded mb-4">
+            <div className="bg-red-100  text-red-700  p-3 rounded mb-4">
               {error}
             </div>
           )}
@@ -168,14 +168,14 @@ const PropertyManagementModal = ({
             </h4>
             
   {property.description && (
-    <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded">
-      <p className="text-sm italic text-gray-600 dark:text-gray-300">
+    <div className="mb-4 p-3 bg-gray-50  rounded">
+      <p className="text-sm italic text-gray-600 ">
         {property.description}
       </p>
     </div>
   )}
             
-            <div className="bg-gray-100 dark:bg-gray-700 p-3 rounded mb-4">
+            <div className="bg-gray-100  p-3 rounded mb-4">
               <p className="my-1"><strong>Тип:</strong> {
                 isRailroad ? "Железная дорога" : 
                 isUtility ? "Коммунальное предприятие" : 
@@ -184,7 +184,7 @@ const PropertyManagementModal = ({
               <p className="my-1"><strong>Стоимость:</strong> ${property.price}</p>
               <p className="my-1"><strong>Владелец:</strong> {getOwnerName()}</p>
               {isRegularProperty && (
-                <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-600 rounded">
+                <div className="mt-3 p-2 bg-gray-50  rounded">
                   <p className="my-1">
                     <strong>Текущая постройка:</strong> {
                       property.houses === 0 ? "Нет" : 
@@ -197,7 +197,7 @@ const PropertyManagementModal = ({
                   </p>
                   
                   {canBuildHouse() && (
-                    <p className="my-1 text-green-600 dark:text-green-400 font-medium">
+                    <p className="my-1 text-green-600  font-medium">
                       <strong>Следующая постройка:</strong> {
                         property.houses === 4 ? "Отель" : "Дом"
                       } (${getHouseCost()})
@@ -208,27 +208,27 @@ const PropertyManagementModal = ({
                     <h6 className="my-1 text-sm font-medium">Таблица аренды:</h6>
                     <table className="w-full">
                       <tbody>
-                        <tr className="border-b dark:border-gray-700">
+                        <tr className="border-b ">
                           <td className="py-1 px-2">Базовая аренда:</td>
                           <td className="py-1 px-2">${property.rent[0]}</td>
                         </tr>
-                        <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
+                        <tr className="bg-gray-100  border-b ">
                           <td className="py-1 px-2">⭐</td>
                           <td className="py-1 px-2">${property.rent[1]}</td>
                         </tr>
-                        <tr className="border-b dark:border-gray-700">
+                        <tr className="border-b ">
                           <td className="py-1 px-2">⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[2]}</td>
                         </tr>
-                        <tr className="bg-gray-100 dark:bg-gray-700 border-b dark:border-gray-600">
+                        <tr className="bg-gray-100  border-b ">
                           <td className="py-1 px-2">⭐⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[3]}</td>
                         </tr>
-                        <tr className="border-b dark:border-gray-700">
+                        <tr className="border-b ">
                           <td className="py-1 px-2">⭐⭐⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[4]}</td>
                         </tr>
-                        <tr className="bg-gray-100 dark:bg-gray-700">
+                        <tr className="bg-gray-100 ">
                           <td className="py-1 px-2">⭐⭐⭐⭐⭐</td>
                           <td className="py-1 px-2">${property.rent[5]}</td>
                         </tr>
@@ -250,7 +250,7 @@ const PropertyManagementModal = ({
                 <h5 className="mt-0 mb-2 text-base font-medium">Доступные действия</h5>
                 
                 {isRegularProperty && canBuildHouse() && (
-                  <div className="flex justify-between items-center bg-green-50 dark:bg-green-900/20 p-3 rounded mb-2">
+                  <div className="flex justify-between items-center bg-green-50  p-3 rounded mb-2">
                     <p className="m-0">Построить {property.houses === 4 ? "отель" : "дом"} (${getHouseCost()})</p>
                     <button 
                       onClick={handleBuildHouse}
@@ -262,7 +262,7 @@ const PropertyManagementModal = ({
                 )}
                 
                 {canMortgage() && (
-                  <div className="flex justify-between items-center bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded mb-2">
+                  <div className="flex justify-between items-center bg-yellow-50  p-3 rounded mb-2">
                     <p className="m-0">Заложить собственность (получить ${Math.floor(property.price / 2)})</p>
                     <button 
                       onClick={handleMortgage}
@@ -274,7 +274,7 @@ const PropertyManagementModal = ({
                 )}
                 
                 {canUnmortgage() && (
-                  <div className="flex justify-between items-center bg-blue-50 dark:bg-blue-900/20 p-3 rounded mb-2">
+                  <div className="flex justify-between items-center bg-blue-50  p-3 rounded mb-2">
                     <p className="m-0">Выкупить собственность (заплатить ${unmortgageAmount})</p>
                     <button 
                       onClick={handleUnmortgage}
@@ -286,7 +286,7 @@ const PropertyManagementModal = ({
                 )}
                 
                 {!canBuildHouse() && !canMortgage() && !canUnmortgage() && (
-                  <p className="p-3 bg-gray-100 dark:bg-gray-700 rounded text-center text-gray-600 dark:text-gray-300">
+                  <p className="p-3 bg-gray-100  rounded text-center text-gray-600 ">
                     Нет доступных действий для этой собственности
                   </p>
                 )}
@@ -306,14 +306,14 @@ const PropertyManagementModal = ({
             )}
             
             {!isOwnedByCurrentPlayer && (
-              <p className="p-3 bg-gray-100 dark:bg-gray-700 rounded text-center text-gray-600 dark:text-gray-300 italic">
+              <p className="p-3 bg-gray-100  rounded text-center text-gray-600  italic">
                 Вы не являетесь владельцем этой собственности и не можете управлять ею.
               </p>
             )}
           </div>
         </div>
 
-        <div className="p-3 border-t border-gray-200 dark:border-gray-700 text-right">
+        <div className="p-3 border-t border-gray-200  text-right">
           <button 
             onClick={onClose} 
             className="bg-gray-500 hover:bg-gray-600 text-white py-1.5 px-3 rounded"

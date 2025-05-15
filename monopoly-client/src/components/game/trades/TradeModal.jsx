@@ -153,11 +153,11 @@ const TradeModal = ({
 
   return (
     <div className="fixed inset-0 bg-neutral-600/70 backdrop-blur-sm flex items-center justify-center z-40">
-      <div className="bg-white dark:bg-gray-800 w-11/12 max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-auto p-8 dark:text-white border border-emerald-100 dark:border-emerald-900/20">
-        <div className="flex justify-between items-center border-b border-emerald-100 dark:border-emerald-800/30 pb-4 mb-6">
-          <h3 className="m-0 text-xl font-semibold text-neutral-700 dark:text-emerald-400">Предложить обмен</h3>
+      <div className="bg-white  w-11/12 max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-auto p-8  border-emerald-100 ">
+        <div className="flex justify-between items-center border-b border-emerald-100  pb-4 mb-6">
+          <h3 className="m-0 text-xl font-semibold text-neutral-700 ">Предложить обмен</h3>
           <button 
-            className="bg-transparent border-0 text-2xl cursor-pointer text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors"
+            className="bg-transparent border-0 text-2xl cursor-pointer text-neutral-500 hover:text-emerald-600  transition-colors"
             onClick={onClose}
           >
             ✕
@@ -166,21 +166,21 @@ const TradeModal = ({
 
         <div>
           {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-300 p-4 rounded-xl mb-6 border-l-4 border-red-400 animate-pulse">
+            <div className="bg-red-50  text-red-600  p-4 rounded-xl mb-6 border-l-4 border-red-400 animate-pulse">
               {error}
             </div>
           )}
 
           {noAvailablePlayers ? (
-            <div className="text-neutral-600 dark:text-neutral-300 p-4 bg-neutral-50 dark:bg-neutral-700/30 rounded-xl mb-6">
+            <div className="text-neutral-600  p-4 bg-neutral-50  rounded-xl mb-6">
               <p className="text-lg">Нет доступных игроков для обмена.</p>
             </div>
           ) : (
             <>
               <div className="mb-6">
-                <label className="block mb-2 text-neutral-700 dark:text-neutral-300 font-medium">Выберите игрока для обмена:</label>
+                <label className="block mb-2 text-neutral-700  font-medium">Выберите игрока для обмена:</label>
                 <select 
-                  className="w-full p-3 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-base dark:bg-gray-700 focus:ring-2 focus:ring-emerald-300 dark:focus:ring-emerald-700 focus:outline-none transition-shadow"
+                  className="w-full p-3 border border-emerald-200  rounded-xl text-base  focus:ring-2 focus:ring-emerald-300  focus:outline-none transition-shadow"
                   value={selectedPlayer ? game.players.indexOf(selectedPlayer) : ""}
                   onChange={(e) => handlePlayerSelect(e.target.value)}
                 >
@@ -198,23 +198,23 @@ const TradeModal = ({
 
               {selectedPlayer && (
                 <div className="flex flex-wrap gap-6 mb-6">
-                  <div className="flex-1 min-w-[250px] dark:bg-emerald-900/20 rounded-xl p-5 shadow-md">
+                  <div className="flex-1 min-w-[250px] rounded-xl p-5 shadow-md">
                     <h4 className="font-semibold mb-4 text-emerald-700 dark:text-emerald-400 text-lg">Ваше предложение</h4>
                     <div className="mb-4">
-                      <label className="block mb-2 font-medium text-neutral-700 dark:text-neutral-300">Деньги:</label>
+                      <label className="block mb-2 font-medium text-neutral-700 ">Деньги:</label>
                       <input 
                         type="number" 
                         min="0" 
                         max={currentPlayer.money}
                         value={offerMoney}
                         onChange={(e) => setOfferMoney(e.target.value)}
-                        className="w-full p-3 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-base dark:bg-gray-700 focus:ring-2 focus:ring-emerald-300 dark:focus:ring-emerald-700 focus:outline-none transition-shadow"
+                        className="w-full p-3 border border-emerald-200  rounded-xl text-base  focus:ring-2 focus:ring-emerald-300  focus:outline-none transition-shadow"
                       />
                     </div>
                     <div className="mt-4">
-                      <h5 className="font-medium mb-2 text-neutral-700 dark:text-neutral-300">Ваши свойства:</h5>
+                      <h5 className="font-medium mb-2 text-neutral-700 ">Ваши свойства:</h5>
                       {myProperties.length === 0 ? (
-                        <p className="text-neutral-500 dark:text-neutral-400 p-3 bg-white/50 dark:bg-black/10 rounded-lg">У вас нет доступных свойств для обмена</p>
+                        <p className="text-neutral-500  p-3 bg-white/50  rounded-lg">У вас нет доступных свойств для обмена</p>
                       ) : (
                         <ul className="list-none p-0 m-0 max-h-[200px] overflow-y-auto space-y-2 pr-1">
                           {myProperties.map(property => (
@@ -223,8 +223,8 @@ const TradeModal = ({
                               onClick={() => toggleOfferProperty(property.id)}
                               className={`flex items-center p-3 rounded-lg cursor-pointer border transition-all ${
                                 offerProperties.includes(property.id) 
-                                  ? 'bg-emerald-100 dark:bg-emerald-800/40 border-emerald-300 dark:border-emerald-700 shadow-sm' 
-                                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-800/70'
+                                  ? 'bg-emerald-100  border-emerald-300  shadow-sm' 
+                                  : 'bg-white  border-gray-200  hover:border-emerald-200 '
                               }`}
                             >
                               <input 
@@ -245,25 +245,25 @@ const TradeModal = ({
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-[250px] dark:bg-emerald-900/20 rounded-xl p-5 shadow-md">
-                    <h4 className="font-semibold mb-4 text-emerald-700 dark:text-emerald-400 text-lg">Вы запрашиваете</h4>
+                  <div className="flex-1 min-w-[250px]  rounded-xl p-5 shadow-md">
+                    <h4 className="font-semibold mb-4 text-emerald-700  text-lg">Вы запрашиваете</h4>
                     <div className="mb-4">
-                      <label className="block mb-2 font-medium text-neutral-700 dark:text-neutral-300">Деньги:</label>
+                      <label className="block mb-2 font-medium text-neutral-700 ">Деньги:</label>
                       <input 
                         type="number" 
                         min="0" 
                         max={selectedPlayer.money || 0}
                         value={requestMoney}
                         onChange={(e) => setRequestMoney(e.target.value)}
-                        className="w-full p-3 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-base dark:bg-gray-700 focus:ring-2 focus:ring-emerald-300 dark:focus:ring-emerald-700 focus:outline-none transition-shadow"
+                        className="w-full p-3 border border-emerald-200  rounded-xl text-base  focus:ring-2 focus:ring-emerald-300  focus:outline-none transition-shadow"
                       />
                     </div>
                     <div className="mt-4">
-                      <h5 className="font-medium mb-2 text-neutral-700 dark:text-neutral-300">
+                      <h5 className="font-medium mb-2 text-neutral-700 ">
                         Свойства {selectedPlayer.isBot ? (selectedPlayer.botName || "Бота") : selectedPlayer.user.username}:
                       </h5>
                       {selectedPlayerProperties.length === 0 ? (
-                        <p className="text-neutral-500 dark:text-neutral-400 p-3 bg-white/50 dark:bg-black/10 rounded-lg">У игрока нет доступных свойств для обмена</p>
+                        <p className="text-neutral-500  p-3 bg-white/50  rounded-lg">У игрока нет доступных свойств для обмена</p>
                       ) : (
                         <ul className="list-none p-0 m-0 max-h-[200px] overflow-y-auto space-y-2 pr-1">
                           {selectedPlayerProperties.map(property => (
@@ -272,8 +272,8 @@ const TradeModal = ({
                               onClick={() => toggleRequestProperty(property.id)}
                               className={`flex items-center p-3 rounded-lg cursor-pointer border transition-all ${
                                 requestProperties.includes(property.id) 
-                                  ? 'bg-emerald-100 dark:bg-emerald-800/40 border-emerald-300 dark:border-emerald-700 shadow-sm' 
-                                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-emerald-200 dark:hover:border-emerald-800/70'
+                                  ? 'bg-emerald-100  border-emerald-300  shadow-sm' 
+                                  : 'bg-white  border-gray-200  hover:border-emerald-200 '
                               }`}
                             >
                               <input 
@@ -297,15 +297,15 @@ const TradeModal = ({
               )}
 
               {selectedPlayer && selectedPlayer.isBot && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-400 p-4 rounded-xl mt-6 mb-4 text-sm">
-                  <p className="text-neutral-700 dark:text-neutral-300"><strong>Примечание:</strong> Боты принимают решение о принятии сделки в зависимости от её выгодности и некоторого элемента случайности.</p>
+                <div className="bg-yellow-50  border-l-4 border-yellow-400 p-4 rounded-xl mt-6 mb-4 text-sm">
+                  <p className="text-neutral-700 "><strong>Примечание:</strong> Боты принимают решение о принятии сделки в зависимости от её выгодности и некоторого элемента случайности.</p>
                 </div>
               )}
             </>
           )}
         </div>
 
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-emerald-100 dark:border-emerald-800/30">
+        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-emerald-100 ">
           <button 
             className="px-6 py-3 bg-neutral-500 hover:bg-neutral-600 text-white rounded-xl font-medium transition-colors shadow-sm hover:shadow"
             onClick={onClose}
@@ -315,7 +315,7 @@ const TradeModal = ({
           <button 
             className={`px-6 py-3 ${
               (!selectedPlayer || noAvailablePlayers) 
-                ? 'bg-neutral-300 cursor-not-allowed dark:bg-neutral-700' 
+                ? 'bg-neutral-300 cursor-not-allowed ' 
                 : 'bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 shadow-md hover:shadow-lg'
             } text-white rounded-xl font-medium transition-all`}
             onClick={handleProposeTrade} 

@@ -4,9 +4,12 @@ import { Link } from "react-router-dom";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(""); // Clear previous errors
+    
     try {
       const response = await fetch("http://localhost:8080/auth/login", {
         method: "POST",
@@ -22,25 +25,13 @@ export default function Login() {
         throw new Error(data.message || "Ошибка входа");
       }
 
-      alert("Вы успешно вошли!");
       localStorage.setItem("token", data.token);
       window.location.href = "/";
     } catch (error) {
-      alert(error.message);
+      // Set error state instead of using alert
+      setError(error.message);
     }
   };
-  /*
-   <div className='text-center'>
-					<p className='text-gray-700 mb-4'>
-						Ещё не зарегестрированы?{' '}
-						<Link
-							to='/auth/registration'
-							className='text-blue-500 hover:text-blue-700 font-semibold'
-						>
-							Регистрация здесь
-						</Link>
-					</p>
-				</div> */
 
  return (
     <div className='flex items-center justify-center min-h-screen bg-emerald-50'>
@@ -75,6 +66,17 @@ export default function Login() {
                         focus:ring-emerald-100 transition-all placeholder-emerald-300'
             />
           </div>
+          
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+              <p className="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                {error}
+              </p>
+            </div>
+          )}
           
           <button
             type="submit"

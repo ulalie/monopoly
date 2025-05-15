@@ -7,7 +7,7 @@ import Login from "./pages/Login";
 import SingUp from "./pages/SingUp";
 import Lobby from "./pages/Lobby";
 import Profile from "./pages/Profile";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/utils/ProtectedRoute";
 import AdminPage from "./pages/AdminPage";
 import NotFoundPage from "./pages/NotFoundPage";
 
@@ -47,6 +47,14 @@ export default function App() {
         element={
           <ProtectedRoute>
             <Game />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            <AdminPage />
           </ProtectedRoute>
         }
       />
