@@ -1,10 +1,9 @@
 import Router from "express";
 const router = new Router();
 import authController from "../controllers/authController.js";
-const { getUsers, login, registration, getCurrUser } = authController;
 import { check } from "express-validator";
-//import authMiddleware from "../middleware/authMiddleware.js";
 import roleMiddleware from "../middleware/roleMiddleware.js";
+import { upload } from "../middleware/fileUpload.js";
 
 router.post(
   "/registration",
@@ -15,10 +14,15 @@ router.post(
       max: 10,
     }),
   ],
-  registration
+  authController.registration
 );
-router.post("/login", login);
-router.get("/users", roleMiddleware(["ADMIN"]), getUsers);
-router.get("/profile", roleMiddleware([]), getCurrUser);
+
+router.post("/login", authController.login);
+router.get("/users", roleMiddleware(["ADMIN"]), authController.getUsers);
+router.get("/profile", roleMiddleware([]), authController.getCurrUser);
+
+router.put('/avatar', roleMiddleware([]), authController.updateAvatar);
+router.post('/upload-avatar', roleMiddleware([]), upload.single('avatar'), authController.uploadAndUpdateAvatar);
+router.get('/test-avatar', roleMiddleware([]), authController.testAvatar);
 
 export default router;
